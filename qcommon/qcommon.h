@@ -775,7 +775,13 @@ NON-PORTABLE SYSTEM SERVICES
 ==============================================================
 */
 
-void Sys_Init( void );
+enum class MessageBoxType {
+	INFORMATION,
+	WARNING,
+	ERROR,
+};
+
+void Sys_MessageBox( MessageBoxType type, const char *message, ... );
 
 void Sys_AppActivate( void );
 
@@ -789,7 +795,6 @@ void Sys_SendKeyEvents( void );
 void Sys_Error( const char *error, ... );
 void Sys_Quit( void );
 char *Sys_GetClipboardData( void );
-void Sys_CopyProtect( void );
 
 /*
 ==============================================================

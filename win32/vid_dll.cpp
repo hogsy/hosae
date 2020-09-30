@@ -1,5 +1,6 @@
 /*
 Copyright (C) 1997-2001 Id Software, Inc.
+Copyright (C) 2020 Mark E Sowden <markelswo@gmail.com>
 
 This program is free software; you can redistribute it and/or
 modify it under the terms of the GNU General Public License
@@ -17,15 +18,17 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
+
 // Main windowed and fullscreen graphics interface module. This module
 // is used for both the software and OpenGL rendering versions of the
 // Quake refresh engine.
+
+#include <SDL2/SDL.h>
+
 #include <assert.h>
 #include <float.h>
 
 #include "..\client\client.h"
-#include "winquake.h"
-//#include "zmouse.h"
 
 // Structure containing functions exported from refresh DLL
 refexport_t re;
@@ -51,7 +54,7 @@ viddef_t viddef;           // global video state; used by other modules
 HINSTANCE reflib_library;  // Handle to refresh DLL
 qboolean reflib_active = 0;
 
-HWND cl_hwnd;  // Main window handle for life of program
+SDL_Window *cl_hwnd;  // Main window handle for life of program
 
 #define VID_NUM_MODES (sizeof(vid_modes) / sizeof(vid_modes[0]))
 
@@ -64,32 +67,20 @@ extern unsigned sys_msg_time;
 /*
 ** WIN32 helper functions
 */
-extern qboolean s_win95;
 
 static void WIN_DisableAltTab( void ) {
 	if( s_alttab_disabled ) return;
 
-	if( s_win95 ) {
-		BOOL old;
-
-		SystemParametersInfo( SPI_SCREENSAVERRUNNING, 1, &old, 0 );
-	} else {
-		RegisterHotKey( 0, 0, MOD_ALT, VK_TAB );
-		RegisterHotKey( 0, 1, MOD_ALT, VK_RETURN );
-	}
+	RegisterHotKey( 0, 0, MOD_ALT, VK_TAB );
+	RegisterHotKey( 0, 1, MOD_ALT, VK_RETURN );
+	
 	s_alttab_disabled = true;
 }
 
 static void WIN_EnableAltTab( void ) {
 	if( s_alttab_disabled ) {
-		if( s_win95 ) {
-			BOOL old;
-
-			SystemParametersInfo( SPI_SCREENSAVERRUNNING, 0, &old, 0 );
-		} else {
-			UnregisterHotKey( 0, 0 );
-			UnregisterHotKey( 0, 1 );
-		}
+		UnregisterHotKey( 0, 0 );
+		UnregisterHotKey( 0, 1 );
 
 		s_alttab_disabled = false;
 	}
@@ -457,9 +448,9 @@ simply by setting the modified flag for the vid_ref variable, which will
 cause the entire video mode and refresh DLL to be reset on the next frame.
 ============
 */
-void VID_Restart_f( void ) { vid_ref->modified = true; }
+void VID_Restart_f() { vid_ref->modified = true; }
 
-void VID_Front_f( void ) {
+void VID_Front_f() {
 	SetWindowLong( cl_hwnd, GWL_EXSTYLE, WS_EX_TOPMOST );
 	SetForegroundWindow( cl_hwnd );
 }

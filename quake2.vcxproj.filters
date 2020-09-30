@@ -22,6 +22,15 @@
     <Filter Include="Source Files\Common">
       <UniqueIdentifier>{ecbe23de-6007-4359-adc3-3e38d67d3d24}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Client">
+      <UniqueIdentifier>{3dd55765-8a4d-4039-a8ca-76ad9909afc6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Server">
+      <UniqueIdentifier>{b2ebf226-c56e-409b-9a78-f89431011860}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Client\Interface">
+      <UniqueIdentifier>{7ca18fdf-6f44-4aef-a310-4c6a2ec2a99a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="3rdparty\miniz\miniz.c">
@@ -30,52 +39,10 @@
     <ClCompile Include="qcommon\llist.cpp">
       <Filter>Source Files\Common</Filter>
     </ClCompile>
-    <ClCompile Include="client\cl_cin.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="client\cl_ents.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="client\cl_fx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="client\cl_input.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="client\cl_inv.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="client\cl_main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="client\cl_newfx.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="client\cl_parse.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="client\cl_pred.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="client\cl_scrn.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="client\cl_tent.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="client\cl_view.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="client\console.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="client\keys.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="client\menu.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="client\qmenu.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="client\snd_dma.cpp">
@@ -123,30 +90,6 @@
     <ClCompile Include="qcommon\pmove.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="server\sv_ccmds.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="server\sv_ents.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="server\sv_game.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="server\sv_init.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="server\sv_main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="server\sv_send.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="server\sv_user.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="server\sv_world.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="win32\cd_win.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -168,11 +111,77 @@
     <ClCompile Include="win32\sys_win.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="win32\vid_menu.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="client\cl_cin.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="client\cl_ents.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="client\cl_fx.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="client\cl_input.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="client\cl_inv.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="client\cl_main.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="client\cl_newfx.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="client\cl_parse.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="client\cl_pred.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="client\cl_scrn.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="client\cl_tent.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="client\cl_view.cpp">
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="server\sv_ccmds.cpp">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\sv_ents.cpp">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\sv_game.cpp">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\sv_init.cpp">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\sv_main.cpp">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\sv_send.cpp">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\sv_user.cpp">
+      <Filter>Source Files\Server</Filter>
+    </ClCompile>
+    <ClCompile Include="server\sv_world.cpp">
+      <Filter>Source Files\Server</Filter>
     </ClCompile>
     <ClCompile Include="win32\vid_dll.cpp">
-      <Filter>Source Files</Filter>
+      <Filter>Source Files\Client</Filter>
+    </ClCompile>
+    <ClCompile Include="client\menu.cpp">
+      <Filter>Source Files\Client\Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="client\qmenu.cpp">
+      <Filter>Source Files\Client\Interface</Filter>
+    </ClCompile>
+    <ClCompile Include="win32\vid_menu.cpp">
+      <Filter>Source Files\Client\Interface</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -261,6 +270,12 @@
       <Filter>Libraries</Filter>
     </Library>
     <Library Include="lib\anoxgfx.lib">
+      <Filter>Libraries</Filter>
+    </Library>
+    <Library Include="3rdparty\SDL2-2.0.12\lib\x86\SDL2.lib">
+      <Filter>Libraries</Filter>
+    </Library>
+    <Library Include="3rdparty\SDL2-2.0.12\lib\x86\SDL2main.lib">
       <Filter>Libraries</Filter>
     </Library>
   </ItemGroup>

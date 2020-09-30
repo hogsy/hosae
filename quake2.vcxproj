@@ -150,7 +150,7 @@
       <ObjectFileName>.\debug\</ObjectFileName>
       <ProgramDataBaseFileName>.\debug\</ProgramDataBaseFileName>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>3rdparty\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>3rdparty\;3rdparty\SDL2-2.0.12\include\</AdditionalIncludeDirectories>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -354,6 +354,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <Library Include="3rdparty\SDL2-2.0.12\lib\x86\SDL2.lib" />
+    <Library Include="3rdparty\SDL2-2.0.12\lib\x86\SDL2main.lib" />
     <Library Include="lib\anoxaux.lib" />
     <Library Include="lib\anoxgfx.lib" />
   </ItemGroup>
