@@ -37,8 +37,10 @@ void Draw_InitLocal( void ) {
 	// load console characters (don't bilerp characters)
 	draw_chars = GL_FindImage( "graphics/fonts/conchars.pcx", it_pic );
 	GL_Bind( draw_chars->texnum );
+#if 0 // todo
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+#endif
 }
 
 
@@ -53,6 +55,7 @@ smoothly scrolled off.
 ================
 */
 void Draw_Char( int x, int y, int num ) {
+#if 0 // todo
 	int				row, col;
 	float			frow, fcol, size;
 
@@ -83,6 +86,7 @@ void Draw_Char( int x, int y, int num ) {
 	glTexCoord2f( fcol, frow + size );
 	glVertex2f( x, y + 8 );
 	glEnd();
+#endif
 }
 
 /*
@@ -137,6 +141,7 @@ void Draw_StretchPic( int x, int y, int w, int h, const char *pic ) {
 	if( scrap_dirty )
 		Scrap_Upload();
 
+#if 0 // todo
 	if( ( ( gl_config.renderer == GL_RENDERER_MCD ) || ( gl_config.renderer & GL_RENDERER_RENDITION ) ) && !gl->has_alpha )
 		glDisable( GL_ALPHA_TEST );
 
@@ -154,6 +159,7 @@ void Draw_StretchPic( int x, int y, int w, int h, const char *pic ) {
 
 	if( ( ( gl_config.renderer == GL_RENDERER_MCD ) || ( gl_config.renderer & GL_RENDERER_RENDITION ) ) && !gl->has_alpha )
 		glEnable( GL_ALPHA_TEST );
+#endif
 }
 
 
@@ -173,6 +179,7 @@ void Draw_Pic( int x, int y, const char *pic ) {
 	if( scrap_dirty )
 		Scrap_Upload();
 
+#if 0 // todo
 	if( ( ( gl_config.renderer == GL_RENDERER_MCD ) || ( gl_config.renderer & GL_RENDERER_RENDITION ) ) && !gl->has_alpha )
 		glDisable( GL_ALPHA_TEST );
 
@@ -190,6 +197,7 @@ void Draw_Pic( int x, int y, const char *pic ) {
 
 	if( ( ( gl_config.renderer == GL_RENDERER_MCD ) || ( gl_config.renderer & GL_RENDERER_RENDITION ) ) && !gl->has_alpha )
 		glEnable( GL_ALPHA_TEST );
+#endif
 }
 
 /*
@@ -209,6 +217,7 @@ void Draw_TileClear( int x, int y, int w, int h, const char *pic ) {
 		return;
 	}
 
+#if 0 // todo
 	if( ( ( gl_config.renderer == GL_RENDERER_MCD ) || ( gl_config.renderer & GL_RENDERER_RENDITION ) ) && !image->has_alpha )
 		glDisable( GL_ALPHA_TEST );
 
@@ -226,6 +235,7 @@ void Draw_TileClear( int x, int y, int w, int h, const char *pic ) {
 
 	if( ( ( gl_config.renderer == GL_RENDERER_MCD ) || ( gl_config.renderer & GL_RENDERER_RENDITION ) ) && !image->has_alpha )
 		glEnable( GL_ALPHA_TEST );
+#endif
 }
 
 
@@ -247,6 +257,7 @@ void Draw_Fill( int x, int y, int w, int h, int c ) {
 		return;
 	}
 
+#if 0 // todo
 	glDisable( GL_TEXTURE_2D );
 
 	color.c = d_8to24table[ c ];
@@ -264,6 +275,7 @@ void Draw_Fill( int x, int y, int w, int h, int c ) {
 	glEnd();
 	glColor3f( 1, 1, 1 );
 	glEnable( GL_TEXTURE_2D );
+#endif
 }
 
 //=============================================================================
@@ -275,6 +287,7 @@ Draw_FadeScreen
 ================
 */
 void Draw_FadeScreen( void ) {
+#if 0 // todo
 	glEnable( GL_BLEND );
 	glDisable( GL_TEXTURE_2D );
 	glColor4f( 0, 0, 0, 0.8 );
@@ -289,6 +302,7 @@ void Draw_FadeScreen( void ) {
 	glColor4f( 1, 1, 1, 1 );
 	glEnable( GL_TEXTURE_2D );
 	glDisable( GL_BLEND );
+#endif
 }
 
 
@@ -339,6 +353,7 @@ void Draw_StretchRaw( int x, int y, int w, int h, int cols, int rows, byte *data
 		}
 	}
 
+#if 0 // todo
 	glTexImage2D( GL_TEXTURE_2D, 0, gl_tex_solid_format, 256, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, image32 );
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
@@ -359,6 +374,7 @@ void Draw_StretchRaw( int x, int y, int w, int h, int cols, int rows, byte *data
 
 	if( ( gl_config.renderer == GL_RENDERER_MCD ) || ( gl_config.renderer & GL_RENDERER_RENDITION ) )
 		glEnable( GL_ALPHA_TEST );
+#endif
 
 	free( image32 );
 }

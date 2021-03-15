@@ -45,15 +45,11 @@ int		gl_alpha_format = 4;
 int		gl_tex_solid_format = 3;
 int		gl_tex_alpha_format = 4;
 
-int		gl_filter_min = GL_LINEAR_MIPMAP_NEAREST;
-int		gl_filter_max = GL_LINEAR;
-
-void GL_SetTexturePalette( unsigned palette[ 256 ] ) {
-	Q_unused( palette );
-	// TODO: obsolete!
-}
+int		gl_filter_min = 0;
+int		gl_filter_max = 0;
 
 void GL_EnableMultitexture( qboolean enable ) {
+#if 0 // todo
 	if( enable ) {
 		GL_SelectTexture( GL_TEXTURE1 );
 		glEnable( GL_TEXTURE_2D );
@@ -65,9 +61,11 @@ void GL_EnableMultitexture( qboolean enable ) {
 	}
 	GL_SelectTexture( GL_TEXTURE0 );
 	GL_TexEnv( GL_REPLACE );
+#endif
 }
 
-void GL_SelectTexture( GLenum texture ) {
+void GL_SelectTexture( unsigned int texture ) {
+#if 0 // todo
 	int tmu;
 	if( texture == GL_TEXTURE0 ) {
 		tmu = 0;
@@ -83,15 +81,18 @@ void GL_SelectTexture( GLenum texture ) {
 
 	glActiveTexture( texture );
 	glClientActiveTexture( texture );
+#endif
 }
 
-void GL_TexEnv( GLenum mode ) {
+void GL_TexEnv( unsigned int mode ) {
+#if 0 // todo
 	static int lastmodes[ 2 ] = { -1, -1 };
 
 	if( mode != lastmodes[ gl_state.currenttmu ] ) {
 		glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode );
 		lastmodes[ gl_state.currenttmu ] = mode;
 	}
+#endif
 }
 
 void GL_Bind( int texnum ) {
@@ -102,11 +103,14 @@ void GL_Bind( int texnum ) {
 	if( gl_state.currenttextures[ gl_state.currenttmu ] == texnum )
 		return;
 	gl_state.currenttextures[ gl_state.currenttmu ] = texnum;
+#if 0 // todo
 	glBindTexture( GL_TEXTURE_2D, texnum );
+#endif
 }
 
-void GL_MBind( GLenum target, int texnum ) {
+void GL_MBind( unsigned int target, int texnum ) {
 	GL_SelectTexture( target );
+#if 0 // todo
 	if( target == GL_TEXTURE0 ) {
 		if( gl_state.currenttextures[ 0 ] == texnum )
 			return;
@@ -114,9 +118,11 @@ void GL_MBind( GLenum target, int texnum ) {
 		if( gl_state.currenttextures[ 1 ] == texnum )
 			return;
 	}
+#endif
 	GL_Bind( texnum );
 }
 
+#if 0 // todo
 typedef struct {
 	const char *name;
 	int	minimize, maximize;
@@ -162,6 +168,7 @@ gltmode_t gl_solid_modes[] = {
 };
 
 #define NUM_GL_SOLID_MODES (sizeof(gl_solid_modes) / sizeof (gltmode_t))
+#endif
 
 /*
 ===============
@@ -169,6 +176,7 @@ GL_TextureMode
 ===============
 */
 void GL_TextureMode( char *string ) {
+#if 0 // todo
 	int		i;
 	image_t *glt;
 
@@ -193,6 +201,7 @@ void GL_TextureMode( char *string ) {
 			glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max );
 		}
 	}
+#endif
 }
 
 /*
@@ -201,6 +210,7 @@ GL_TextureAlphaMode
 ===============
 */
 void GL_TextureAlphaMode( char *string ) {
+#if 0 // todo
 	unsigned int		i;
 
 	for( i = 0; i < NUM_GL_ALPHA_MODES; i++ ) {
@@ -214,6 +224,7 @@ void GL_TextureAlphaMode( char *string ) {
 	}
 
 	gl_tex_alpha_format = gl_alpha_modes[ i ].mode;
+#endif
 }
 
 /*
@@ -222,6 +233,7 @@ GL_TextureSolidMode
 ===============
 */
 void GL_TextureSolidMode( char *string ) {
+#if 0 // todo
 	unsigned int		i;
 
 	for( i = 0; i < NUM_GL_SOLID_MODES; i++ ) {
@@ -235,6 +247,7 @@ void GL_TextureSolidMode( char *string ) {
 	}
 
 	gl_tex_solid_format = gl_solid_modes[ i ].mode;
+#endif
 }
 
 /*
@@ -731,7 +744,6 @@ qboolean GL_Upload32( unsigned *data, int width, int height, qboolean mipmap ) {
 			scaled_width, scaled_height, GL_UNSIGNED_BYTE, scaled );
 		qglTexImage2D( GL_TEXTURE_2D, 0, comp, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled );
 	}
-#else
 
 	if( scaled_width == width && scaled_height == height ) {
 		if( !mipmap ) {
@@ -763,8 +775,6 @@ qboolean GL_Upload32( unsigned *data, int width, int height, qboolean mipmap ) {
 		}
 	}
 done:;
-#endif
-
 
 	if( mipmap ) {
 		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_min );
@@ -773,7 +783,7 @@ done:;
 		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, gl_filter_max );
 		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max );
 	}
-
+#endif
 	return ( samples == gl_alpha_format );
 }
 
@@ -1025,6 +1035,7 @@ will be freed.
 ================
 */
 void GL_FreeUnusedImages( void ) {
+#if 0 // todo
 	int		i;
 	image_t *image;
 
@@ -1043,6 +1054,7 @@ void GL_FreeUnusedImages( void ) {
 		glDeleteTextures( 1, ( GLuint * ) &image->texnum );
 		memset( image, 0, sizeof( *image ) );
 	}
+#endif
 }
 
 
@@ -1136,6 +1148,7 @@ GL_ShutdownImages
 ===============
 */
 void	GL_ShutdownImages( void ) {
+#if 0 // todo
 	int		i;
 	image_t *image;
 
@@ -1146,4 +1159,5 @@ void	GL_ShutdownImages( void ) {
 		glDeleteTextures( 1, ( GLuint* ) &image->texnum );
 		memset( image, 0, sizeof( *image ) );
 	}
+#endif
 }

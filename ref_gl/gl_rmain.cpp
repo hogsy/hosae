@@ -153,11 +153,13 @@ qboolean R_CullBox( vec3_t mins, vec3_t maxs ) {
 }
 
 void R_RotateForEntity( entity_t *e ) {
+#if 0 // todo
 	glTranslatef( e->origin[ 0 ], e->origin[ 1 ], e->origin[ 2 ] );
 
 	glRotatef( e->angles[ 1 ], 0, 0, 1 );
 	glRotatef( -e->angles[ 0 ], 0, 1, 0 );
 	glRotatef( -e->angles[ 2 ], 1, 0, 0 );
+#endif
 }
 
 /*
@@ -212,6 +214,7 @@ void R_DrawSpriteModel( entity_t *e ) {
 
 	if( e->flags & RF_TRANSLUCENT ) alpha = e->alpha;
 
+#if 0 // todo
 	if( alpha != 1.0F ) glEnable( GL_BLEND );
 
 	glColor4f( 1, 1, 1, alpha );
@@ -255,6 +258,7 @@ void R_DrawSpriteModel( entity_t *e ) {
 	if( alpha != 1.0F ) glDisable( GL_BLEND );
 
 	glColor4f( 1, 1, 1, 1 );
+#endif
 }
 
 //==================================================================================
@@ -273,6 +277,7 @@ void R_DrawNullModel( void ) {
 	else
 		R_LightPoint( currententity->origin, shadelight );
 
+#if 0 // todo
 	glPushMatrix();
 	R_RotateForEntity( currententity );
 
@@ -294,6 +299,7 @@ void R_DrawNullModel( void ) {
 	glColor3f( 1, 1, 1 );
 	glPopMatrix();
 	glEnable( GL_TEXTURE_2D );
+#endif
 }
 
 /*
@@ -340,6 +346,7 @@ void R_DrawEntitiesOnList( void ) {
 		}
 	}
 
+#if 0 // todo
 	// draw transparent entities
 	// we could sort these if it ever becomes a problem...
 	glDepthMask( 0 );  // no z writes
@@ -375,6 +382,7 @@ void R_DrawEntitiesOnList( void ) {
 		}
 	}
 	glDepthMask( 1 );  // back to writing
+#endif
 }
 
 /*
@@ -389,6 +397,7 @@ void GL_DrawParticles( int num_particles, const particle_t particles[],
 	float scale;
 	byte color[ 4 ];
 
+#if 0 // todo
 	GL_Bind( r_particletexture->texnum );
 	glDepthMask( GL_FALSE );  // no z buffering
 	glEnable( GL_BLEND );
@@ -432,6 +441,7 @@ void GL_DrawParticles( int num_particles, const particle_t particles[],
 	glColor4f( 1, 1, 1, 1 );
 	glDepthMask( 1 );  // back to normal Z buffering
 	GL_TexEnv( GL_REPLACE );
+#endif
 }
 
 /*
@@ -440,6 +450,7 @@ R_DrawParticles
 ===============
 */
 void R_DrawParticles( void ) {
+#if 0 // todo
 	if( gl_ext_pointparameters->value && glPointParameterfEXT ) {
 		int i;
 		unsigned char color[ 4 ];
@@ -472,6 +483,7 @@ void R_DrawParticles( void ) {
 		GL_DrawParticles( r_newrefdef.num_particles, r_newrefdef.particles,
 			d_8to24table );
 	}
+#endif
 }
 
 /*
@@ -483,6 +495,7 @@ void R_PolyBlend( void ) {
 	if( !gl_polyblend->value ) return;
 	if( !v_blend[ 3 ] ) return;
 
+#if 0 // todo
 	glDisable( GL_ALPHA_TEST );
 	glEnable( GL_BLEND );
 	glDisable( GL_DEPTH_TEST );
@@ -509,6 +522,7 @@ void R_PolyBlend( void ) {
 	glEnable( GL_ALPHA_TEST );
 
 	glColor4f( 1, 1, 1, 1 );
+#endif
 }
 
 //=======================================================================
@@ -620,6 +634,7 @@ void R_SetupFrame( void ) {
 	c_alias_polys = 0;
 
 	// clear out the portion of the screen that the NOWORLDMODEL defines
+#if 0 // todo
 	if( r_newrefdef.rdflags & RDF_NOWORLDMODEL ) {
 		glEnable( GL_SCISSOR_TEST );
 		glClearColor( 0.3, 0.3, 0.3, 1 );
@@ -629,11 +644,12 @@ void R_SetupFrame( void ) {
 		glClearColor( 1, 0, 0.5, 0.5 );
 		glDisable( GL_SCISSOR_TEST );
 	}
+#endif
 }
 
-void MYgluPerspective( GLdouble fovy, GLdouble aspect, GLdouble zNear,
-	GLdouble zFar ) {
-	GLdouble xmin, xmax, ymin, ymax;
+void MYgluPerspective( double fovy, double aspect, double zNear,
+	double zFar ) {
+	double xmin, xmax, ymin, ymax;
 
 	ymax = zNear * tan( fovy * M_PI / 360.0 );
 	ymin = -ymax;
@@ -644,7 +660,9 @@ void MYgluPerspective( GLdouble fovy, GLdouble aspect, GLdouble zNear,
 	xmin += -( 2 * gl_state.camera_separation ) / zNear;
 	xmax += -( 2 * gl_state.camera_separation ) / zNear;
 
+#if 0 // todo
 	glFrustum( xmin, xmax, ymin, ymax, zNear, zFar );
+#endif
 }
 
 /*
@@ -669,6 +687,7 @@ void R_SetupGL( void ) {
 	w = x2 - x;
 	h = y - y2;
 
+#if 0 // todo
 	glViewport( x, y2, w, h );
 
 	//
@@ -709,6 +728,7 @@ void R_SetupGL( void ) {
 	glDisable( GL_BLEND );
 	glDisable( GL_ALPHA_TEST );
 	glEnable( GL_DEPTH_TEST );
+#endif
 }
 
 /*
@@ -717,32 +737,19 @@ R_Clear
 =============
 */
 void R_Clear( void ) {
-	if( gl_ztrick->value ) {
-		static int trickframe;
-
-		if( gl_clear->value ) glClear( GL_COLOR_BUFFER_BIT );
-
-		trickframe++;
-		if( trickframe & 1 ) {
-			gldepthmin = 0;
-			gldepthmax = 0.49999;
-			glDepthFunc( GL_LEQUAL );
-		} else {
-			gldepthmin = 1;
-			gldepthmax = 0.5;
-			glDepthFunc( GL_GEQUAL );
-		}
+	if( gl_clear->value ) {
+		bgfx::setViewClear( 0, BGFX_CLEAR_COLOR | BGFX_CLEAR_DEPTH, 0x443355FF );
 	} else {
-		if( gl_clear->value )
-			glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
-		else
-			glClear( GL_DEPTH_BUFFER_BIT );
-		gldepthmin = 0;
-		gldepthmax = 1;
-		glDepthFunc( GL_LEQUAL );
+		bgfx::setViewClear( 0, BGFX_CLEAR_DEPTH, 0x443355FF );
 	}
 
+#if 0 // todo
+	gldepthmin = 0;
+	gldepthmax = 1;
+	glDepthFunc( GL_LEQUAL );
+
 	glDepthRange( gldepthmin, gldepthmax );
+#endif
 }
 
 void R_Flash( void ) { R_PolyBlend(); }
@@ -769,7 +776,9 @@ void R_RenderView( refdef_t *fd ) {
 
 	R_PushDlights();
 
+#if 0 // todo
 	if( gl_finish->value ) glFinish();
+#endif
 
 	R_SetupFrame();
 
@@ -799,6 +808,7 @@ void R_RenderView( refdef_t *fd ) {
 }
 
 void R_SetGL2D( void ) {
+#if 0 // todo
 	// set 2D virtual screen size
 	glViewport( 0, 0, vid.width, vid.height );
 	glMatrixMode( GL_PROJECTION );
@@ -811,6 +821,7 @@ void R_SetGL2D( void ) {
 	glDisable( GL_BLEND );
 	glEnable( GL_ALPHA_TEST );
 	glColor4f( 1, 1, 1, 1 );
+#endif
 }
 
 #if 0 // Unused
@@ -1073,7 +1084,7 @@ int R_Init( void *hinstance, void *hWnd ) {
 	}
 
 	// initialize our QGL dynamic bindings
-	if( !QGL_Init() ) {
+	if( !QGL_Init( vid.width, vid.height, nullptr ) ) {
 		QGL_Shutdown();
 		ri.Con_Printf( PRINT_ALL, "ref_gl::R_Init() - could not load \"%s\"\n",
 			gl_driver->string );
@@ -1085,6 +1096,7 @@ int R_Init( void *hinstance, void *hWnd ) {
 	/*
 	** get our various GL strings
 	*/
+#if 0 // todo
 	gl_config.vendor_string = ( const char * ) glGetString( GL_VENDOR );
 	ri.Con_Printf( PRINT_ALL, "GL_VENDOR: %s\n", gl_config.vendor_string );
 	gl_config.renderer_string = ( const char * ) glGetString( GL_RENDERER );
@@ -1093,22 +1105,16 @@ int R_Init( void *hinstance, void *hWnd ) {
 	ri.Con_Printf( PRINT_ALL, "GL_VERSION: %s\n", gl_config.version_string );
 	gl_config.extensions_string = ( const char * ) glGetString( GL_EXTENSIONS );
 	ri.Con_Printf( PRINT_ALL, "GL_EXTENSIONS: %s\n", gl_config.extensions_string );
+#endif
 
+	gl_config.renderer_string = bgfx::getRendererName( bgfx::getRendererType() );
 	strcpy( renderer_buffer, gl_config.renderer_string );
 	Q_strtolower( renderer_buffer );
 
-	strcpy( vendor_buffer, gl_config.vendor_string );
-    Q_strtolower( vendor_buffer );
+	const bgfx::Caps *caps = bgfx::getCaps();
+	snprintf( vendor_buffer, sizeof( vendor_buffer ), "vendorId: %d, deviceId: %d", caps->vendorId, caps->deviceId );
 
-	if( strstr( renderer_buffer, "voodoo" ) ) {
-		if( !strstr( renderer_buffer, "rush" ) )
-			gl_config.renderer = GL_RENDERER_VOODOO;
-	} else if( strstr( renderer_buffer, "gdi" ) )
-		gl_config.renderer = GL_RENDERER_MCD;
-	else if( strstr( renderer_buffer, "verite" ) )
-		gl_config.renderer = GL_RENDERER_RENDITION;
-	else
-		gl_config.renderer = GL_RENDERER_OTHER;
+	gl_config.renderer = GL_RENDERER_OTHER;
 
 	if( toupper( gl_monolightmap->string[ 1 ] ) != 'F' ) {
 		ri.Cvar_Set( "gl_monolightmap", "0" );
@@ -1141,9 +1147,11 @@ int R_Init( void *hinstance, void *hWnd ) {
 	R_InitParticleTexture();
 	Draw_InitLocal();
 
+#if 0 // todo
 	err = glGetError();
 	if( err != GL_NO_ERROR )
 		ri.Con_Printf( PRINT_ALL, "glGetError() = 0x%x\n", err );
+#endif
 
 	return true;
 }
@@ -1229,6 +1237,7 @@ void R_BeginFrame( float camera_separation ) {
 	/*
 	** go into 2D mode
 	*/
+#if 0 // todo
 	glViewport( 0, 0, vid.width, vid.height );
 	glMatrixMode( GL_PROJECTION );
 	glLoadIdentity();
@@ -1240,19 +1249,21 @@ void R_BeginFrame( float camera_separation ) {
 	glDisable( GL_BLEND );
 	glEnable( GL_ALPHA_TEST );
 	glColor4f( 1, 1, 1, 1 );
+#endif
 
 	/*
 	** draw buffer stuff
 	*/
 	if( gl_drawbuffer->modified ) {
 		gl_drawbuffer->modified = false;
-
+#if 0 // todo
 		if( gl_state.camera_separation == 0 || !gl_state.stereo_enabled ) {
 			if( Q_stricmp( gl_drawbuffer->string, "GL_FRONT" ) == 0 )
 				glDrawBuffer( GL_FRONT );
 			else
 				glDrawBuffer( GL_BACK );
 		}
+#endif
 	}
 
 	/*
@@ -1311,17 +1322,19 @@ void R_SetPalette( const unsigned char *palette ) {
 			rp[ i * 4 + 3 ] = 0xff;
 		}
 	}
-	GL_SetTexturePalette( r_rawpalette );
 
+#if 0 // todo
 	glClearColor( 0, 0, 0, 0 );
 	glClear( GL_COLOR_BUFFER_BIT );
 	glClearColor( 1, 0, 0.5, 0.5 );
+#endif
 }
 
 /*
 ** R_DrawBeam
 */
 void R_DrawBeam( entity_t *e ) {
+#if 0 // todo
 #define NUM_BEAM_SEGS 6
 
 	int i;
@@ -1382,6 +1395,7 @@ void R_DrawBeam( entity_t *e ) {
 	glEnable( GL_TEXTURE_2D );
 	glDisable( GL_BLEND );
 	glDepthMask( GL_TRUE );
+#endif
 }
 
 //===================================================================

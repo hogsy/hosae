@@ -195,7 +195,7 @@
       <ObjectFileName>.\debug\</ObjectFileName>
       <ProgramDataBaseFileName>.\debug\</ProgramDataBaseFileName>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>..\3rdparty\glew\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\3rdparty\bgfx\include\;..\3rdparty\bx\include\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>
@@ -217,9 +217,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <ImportLibrary>.\..\debug\ref_gl.lib</ImportLibrary>
-      <AdditionalDependencies>winmm.lib;glew32s.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>winmm.lib;Psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <ModuleDefinitionFile>.\ref_gl.def</ModuleDefinitionFile>
-      <AdditionalLibraryDirectories>..\3rdparty\glew\lib\Release\Win32\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -298,6 +298,9 @@
     <CustomBuild Include="ref_gl.def" />
   </ItemGroup>
   <ItemGroup>
+    <Library Include="..\3rdparty\bgfx\.build\win32_vs2019\bin\bgfxDebug.lib" />
+    <Library Include="..\3rdparty\bgfx\.build\win32_vs2019\bin\bimgDebug.lib" />
+    <Library Include="..\3rdparty\bgfx\.build\win32_vs2019\bin\bxDebug.lib" />
     <Library Include="..\lib\anoxaux.lib" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

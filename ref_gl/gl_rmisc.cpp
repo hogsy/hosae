@@ -128,7 +128,9 @@ void GL_ScreenShot_f( void ) {
 	buffer[ 15 ] = vid.height >> 8;
 	buffer[ 16 ] = 24;	// pixel size
 
+#if 0 // todo
 	glReadPixels( 0, 0, vid.width, vid.height, GL_RGB, GL_UNSIGNED_BYTE, buffer + 18 );
+#endif
 
 	// swap rgb to bgr
 	c = 18 + vid.width * vid.height * 3;
@@ -160,7 +162,7 @@ void GL_Strings_f( void ) {
 ** GL_SetDefaultState
 */
 void GL_SetDefaultState( void ) {
-	glClearColor( 1, 0, 0.5, 0.5 );
+#if 0 // todo
 	glCullFace( GL_FRONT );
 	glEnable( GL_TEXTURE_2D );
 
@@ -204,6 +206,7 @@ void GL_SetDefaultState( void ) {
 	}
 
 	GL_UpdateSwapInterval();
+#endif
 }
 
 void GL_UpdateSwapInterval( void ) {

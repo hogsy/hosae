@@ -212,6 +212,7 @@ void EmitWaterPolys( msurface_t *fa ) {
 	for( bp = fa->polys; bp; bp = bp->next ) {
 		p = bp;
 
+#if 0 // todo
 		glBegin( GL_TRIANGLE_FAN );
 		for( i = 0, v = p->verts[ 0 ]; i < p->numverts; i++, v += VERTEXSIZE ) {
 			os = v[ 3 ];
@@ -236,6 +237,7 @@ void EmitWaterPolys( msurface_t *fa ) {
 			glVertex3fv( v );
 		}
 		glEnd();
+#endif
 	}
 }
 
@@ -508,8 +510,10 @@ void MakeSkyVec( float s, float t, int axis ) {
 		t = sky_max;
 
 	t = 1.0 - t;
+#if 0 // todo
 	glTexCoord2f( s, t );
 	glVertex3fv( v );
+#endif
 }
 
 /*
@@ -536,6 +540,7 @@ void R_DrawSkyBox( void ) {
 			return;		// nothing visible
 	}
 
+#if 0 // todo
 	glPushMatrix();
 	glTranslatef( r_origin[ 0 ], r_origin[ 1 ], r_origin[ 2 ] );
 	glRotatef( r_newrefdef.time * skyrotate, skyaxis[ 0 ], skyaxis[ 1 ], skyaxis[ 2 ] );
@@ -562,6 +567,7 @@ void R_DrawSkyBox( void ) {
 		glEnd();
 	}
 	glPopMatrix();
+#endif
 #if 0
 	glDisable( GL_BLEND );
 	glTexEnvf( GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE );

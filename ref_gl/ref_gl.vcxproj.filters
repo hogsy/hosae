@@ -111,5 +111,14 @@
     <Library Include="..\lib\anoxaux.lib">
       <Filter>Libraries</Filter>
     </Library>
+    <Library Include="..\3rdparty\bgfx\.build\win32_vs2019\bin\bgfxDebug.lib">
+      <Filter>Libraries</Filter>
+    </Library>
+    <Library Include="..\3rdparty\bgfx\.build\win32_vs2019\bin\bimgDebug.lib">
+      <Filter>Libraries</Filter>
+    </Library>
+    <Library Include="..\3rdparty\bgfx\.build\win32_vs2019\bin\bxDebug.lib">
+      <Filter>Libraries</Filter>
+    </Library>
   </ItemGroup>
 </Project>

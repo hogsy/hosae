@@ -45,20 +45,13 @@ extern cvar_t *vid_fullscreen;
 extern cvar_t *vid_ref;
 
 static qboolean VerifyDriver( void ) {
-	char buffer[ 1024 ];
-
-	strcpy( buffer, (const char *)glGetString( GL_RENDERER ) );
-	strlwr( buffer );
-	if( strcmp( buffer, "gdi generic" ) == 0 )
-		if( !glw_state.mcd_accelerated )
-			return false;
 	return true;
 }
 
 /*
 ** VID_CreateWindow
 */
-#define	WINDOW_CLASS_NAME	"Quake 2"
+#define	WINDOW_CLASS_NAME "hosae"
 
 qboolean VID_CreateWindow( int width, int height, qboolean fullscreen ) {
 	WNDCLASS		wc;
@@ -114,7 +107,7 @@ qboolean VID_CreateWindow( int width, int height, qboolean fullscreen ) {
 	glw_state.hWnd = CreateWindowEx(
 		exstyle,
 		WINDOW_CLASS_NAME,
-		"Quake 2",
+		WINDOW_CLASS_NAME,
 		stylebits,
 		x, y, w, h,
 		NULL,
@@ -127,12 +120,6 @@ qboolean VID_CreateWindow( int width, int height, qboolean fullscreen ) {
 
 	ShowWindow( glw_state.hWnd, SW_SHOW );
 	UpdateWindow( glw_state.hWnd );
-
-	// init all the gl stuff for the window
-	if( !GLimp_InitGL() ) {
-		ri.Con_Printf( PRINT_ALL, "VID_CreateWindow() - GLimp_InitGL failed\n" );
-		return false;
-	}
 
 	SetForegroundWindow( glw_state.hWnd );
 	SetFocus( glw_state.hWnd );
@@ -148,19 +135,17 @@ qboolean VID_CreateWindow( int width, int height, qboolean fullscreen ) {
 ** GLimp_SetMode
 */
 rserr_t GLimp_SetMode( int *pwidth, int *pheight, int mode, qboolean fullscreen ) {
-	int width, height;
-	const char *win_fs[] = { "W", "FS" };
-
 	ri.Con_Printf( PRINT_ALL, "Initializing OpenGL display\n" );
 
 	ri.Con_Printf( PRINT_ALL, "...setting mode %d:", mode );
 
+	int width, height;
 	if( !ri.Vid_GetModeInfo( &width, &height, mode ) ) {
 		ri.Con_Printf( PRINT_ALL, " invalid mode\n" );
 		return rserr_invalid_mode;
 	}
 
-	ri.Con_Printf( PRINT_ALL, " %d %d %s\n", width, height, win_fs[ fullscreen ] );
+	ri.Con_Printf( PRINT_ALL, " %d %d %s\n", width, height, fullscreen ? "FS" : "W" );
 
 	// destroy the existing window
 	if( glw_state.hWnd ) {
@@ -275,18 +260,12 @@ rserr_t GLimp_SetMode( int *pwidth, int *pheight, int mode, qboolean fullscreen 
 **
 */
 void GLimp_Shutdown( void ) {
-	if( !wglMakeCurrent( NULL, NULL ) )
-		ri.Con_Printf( PRINT_ALL, "ref_gl::R_Shutdown() - wglMakeCurrent failed\n" );
-	if( glw_state.hGLRC ) {
-		if( !wglDeleteContext( glw_state.hGLRC ) )
-			ri.Con_Printf( PRINT_ALL, "ref_gl::R_Shutdown() - wglDeleteContext failed\n" );
-		glw_state.hGLRC = NULL;
-	}
 	if( glw_state.hDC ) {
 		if( !ReleaseDC( glw_state.hWnd, glw_state.hDC ) )
 			ri.Con_Printf( PRINT_ALL, "ref_gl::R_Shutdown() - ReleaseDC failed\n" );
 		glw_state.hDC = NULL;
 	}
+
 	if( glw_state.hWnd ) {
 		DestroyWindow( glw_state.hWnd );
 		glw_state.hWnd = NULL;
@@ -322,23 +301,6 @@ qboolean GLimp_Init( void *hinstance, void *wndproc ) {
 
 	glw_state.allowdisplaydepthchange = false;
 
-	if( GetVersionEx( &vinfo ) ) {
-		if( vinfo.dwMajorVersion > 4 ) {
-			glw_state.allowdisplaydepthchange = true;
-		} else if( vinfo.dwMajorVersion == 4 ) {
-			if( vinfo.dwPlatformId == VER_PLATFORM_WIN32_NT ) {
-				glw_state.allowdisplaydepthchange = true;
-			} else if( vinfo.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS ) {
-				if( LOWORD( vinfo.dwBuildNumber ) >= OSR2_BUILD_NUMBER ) {
-					glw_state.allowdisplaydepthchange = true;
-				}
-			}
-		}
-	} else {
-		ri.Con_Printf( PRINT_ALL, "GLimp_Init() - GetVersionEx failed\n" );
-		return false;
-	}
-
 	glw_state.hInstance = (HINSTANCE)hinstance;
 	glw_state.wndproc = wndproc;
 
@@ -346,6 +308,9 @@ qboolean GLimp_Init( void *hinstance, void *wndproc ) {
 }
 
 qboolean GLimp_InitGL( void ) {
+#if 1
+	return true;
+#else
 	PIXELFORMATDESCRIPTOR pfd =
 	{
 		sizeof( PIXELFORMATDESCRIPTOR ),	// size of this pfd
@@ -368,29 +333,7 @@ qboolean GLimp_InitGL( void ) {
 		0, 0, 0							// layer masks ignored
 	};
 	int  pixelformat;
-	cvar_t *stereo;
-
-	stereo = ri.Cvar_Get( "cl_stereo", "0", 0 );
-
-	/*
-	** set PFD_STEREO if necessary
-	*/
-	if( stereo->value != 0 ) {
-		ri.Con_Printf( PRINT_ALL, "...attempting to use stereo\n" );
-		pfd.dwFlags |= PFD_STEREO;
-		gl_state.stereo_enabled = true;
-	} else {
-		gl_state.stereo_enabled = false;
-	}
-
-	/*
-	** figure out if we're running on a minidriver or not
-	*/
-	if( strstr( gl_driver->string, "opengl32" ) != 0 )
-		glw_state.minidriver = false;
-	else
-		glw_state.minidriver = true;
-
+	
 	/*
 	** Get a DC for the specified window
 	*/
@@ -436,6 +379,7 @@ qboolean GLimp_InitGL( void ) {
 	** startup the OpenGL subsystem by creating a context and making
 	** it current
 	*/
+#if 0 // todo
 	if( ( glw_state.hGLRC = wglCreateContext( glw_state.hDC ) ) == 0 ) {
 		ri.Con_Printf( PRINT_ALL, "GLimp_Init() - qwglCreateContext failed\n" );
 
@@ -447,6 +391,7 @@ qboolean GLimp_InitGL( void ) {
 
 		goto fail;
 	}
+#endif
 
 	if( !VerifyDriver() ) {
 		ri.Con_Printf( PRINT_ALL, "GLimp_Init() - no hardware acceleration detected\n" );
@@ -461,16 +406,19 @@ qboolean GLimp_InitGL( void ) {
 	return true;
 
 fail:
+#if 0 // todo
 	if( glw_state.hGLRC ) {
 		wglDeleteContext( glw_state.hGLRC );
 		glw_state.hGLRC = NULL;
 	}
+#endif
 
 	if( glw_state.hDC ) {
 		ReleaseDC( glw_state.hWnd, glw_state.hDC );
 		glw_state.hDC = NULL;
 	}
 	return false;
+#endif
 }
 
 /*
@@ -485,13 +433,9 @@ void GLimp_BeginFrame( float camera_separation ) {
 		gl_bitdepth->modified = false;
 	}
 
-	if( camera_separation < 0 && gl_state.stereo_enabled ) {
-		glDrawBuffer( GL_BACK_LEFT );
-	} else if( camera_separation > 0 && gl_state.stereo_enabled ) {
-		glDrawBuffer( GL_BACK_RIGHT );
-	} else {
-		glDrawBuffer( GL_BACK );
-	}
+#if 0 // todo
+	glDrawBuffer( GL_BACK );
+#endif
 }
 
 /*
@@ -507,12 +451,12 @@ void GLimp_EndFrame( void ) {
 	GLenum err = glGetError();
 	assert( err == GL_NO_ERROR );
 #endif
-#endif
 
 	if( stricmp( gl_drawbuffer->string, "GL_BACK" ) == 0 ) {
 		if( !SwapBuffers( glw_state.hDC ) )
 			ri.Sys_Error( ERR_FATAL, "GLimp_EndFrame() - SwapBuffers() failed!\n" );
 	}
+#endif
 }
 
 /*

@@ -173,6 +173,7 @@ void DrawGLPoly( glpoly_t *p ) {
 	int		i;
 	float *v;
 
+#if 0 // todo
 	glBegin( GL_POLYGON );
 	v = p->verts[ 0 ];
 	for( i = 0; i < p->numverts; i++, v += VERTEXSIZE ) {
@@ -180,6 +181,7 @@ void DrawGLPoly( glpoly_t *p ) {
 		glVertex3fv( v );
 	}
 	glEnd();
+#endif
 }
 
 //============
@@ -201,6 +203,7 @@ void DrawGLFlowingPoly( msurface_t *fa ) {
 	if( scroll == 0.0f )
 		scroll = -64.0f;
 
+#if 0 // todo
 	glBegin( GL_POLYGON );
 	v = p->verts[ 0 ];
 	for( i = 0; i < p->numverts; i++, v += VERTEXSIZE ) {
@@ -208,6 +211,7 @@ void DrawGLFlowingPoly( msurface_t *fa ) {
 		glVertex3fv( v );
 	}
 	glEnd();
+#endif
 }
 //PGM
 //============
@@ -222,6 +226,7 @@ void R_DrawTriangleOutlines( void ) {
 	if( !gl_showtris->value )
 		return;
 
+#if 0 // todo
 	glDisable( GL_TEXTURE_2D );
 	glDisable( GL_DEPTH_TEST );
 	glColor4f( 1, 1, 1, 1 );
@@ -246,12 +251,14 @@ void R_DrawTriangleOutlines( void ) {
 
 	glEnable( GL_DEPTH_TEST );
 	glEnable( GL_TEXTURE_2D );
+#endif
 }
 
 /*
 ** DrawGLPolyChain
 */
 void DrawGLPolyChain( glpoly_t *p, float soffset, float toffset ) {
+#if 0 // todo
 	if( soffset == 0 && toffset == 0 ) {
 		for( ; p != 0; p = p->chain ) {
 			float *v;
@@ -279,6 +286,7 @@ void DrawGLPolyChain( glpoly_t *p, float soffset, float toffset ) {
 			glEnd();
 		}
 	}
+#endif
 }
 
 /*
@@ -297,6 +305,7 @@ void R_BlendLightmaps( void ) {
 	if( !r_worldmodel->lightdata )
 		return;
 
+#if 0 // todo
 	// don't bother writing Z
 	glDepthMask( 0 );
 
@@ -328,6 +337,7 @@ void R_BlendLightmaps( void ) {
 			}
 		}
 	}
+#endif
 
 	if( currentmodel == r_worldmodel )
 		c_visible_lightmaps = 0;
@@ -419,9 +429,11 @@ void R_BlendLightmaps( void ) {
 	/*
 	** restore state
 	*/
+#if 0 // todo
 	glDisable( GL_BLEND );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 	glDepthMask( 1 );
+#endif
 }
 
 /*
@@ -438,6 +450,7 @@ void R_RenderBrushPoly( msurface_t *fa ) {
 
 	image = R_TextureAnimation( fa->texinfo );
 
+#if 0 // todo
 	if( fa->flags & SURF_DRAWTURB ) {
 		GL_Bind( image->texnum );
 
@@ -456,6 +469,7 @@ void R_RenderBrushPoly( msurface_t *fa ) {
 
 		GL_TexEnv( GL_REPLACE );
 	}
+#endif
 
 	//======
 	//PGM
@@ -484,6 +498,7 @@ void R_RenderBrushPoly( msurface_t *fa ) {
 		}
 	}
 
+#if 0 // todo
 	if( is_dynamic ) {
 		if( ( fa->styles[ maps ] >= 32 || fa->styles[ maps ] == 0 ) && ( fa->dlightframe != r_framecount ) ) {
 			unsigned	temp[ 34 * 34 ];
@@ -513,6 +528,7 @@ void R_RenderBrushPoly( msurface_t *fa ) {
 		fa->lightmapchain = gl_lms.lightmap_surfaces[ fa->lightmaptexturenum ];
 		gl_lms.lightmap_surfaces[ fa->lightmaptexturenum ] = fa;
 	}
+#endif
 }
 
 
@@ -529,6 +545,7 @@ void R_DrawAlphaSurfaces( void ) {
 	msurface_t *s;
 	float		intens;
 
+#if 0 // todo
 	//
 	// go back to the world matrix
 	//
@@ -561,6 +578,7 @@ void R_DrawAlphaSurfaces( void ) {
 	glDisable( GL_BLEND );
 
 	r_alpha_surfaces = NULL;
+#endif
 }
 
 /*
@@ -575,6 +593,7 @@ void DrawTextureChains( void ) {
 
 	c_visible_textures = 0;
 
+#if 0 // todo
 	//	GL_TexEnv( GL_REPLACE );
 
 	if( !glSelectTextureSGIS ) {
@@ -624,6 +643,7 @@ void DrawTextureChains( void ) {
 	}
 
 	GL_TexEnv( GL_REPLACE );
+#endif
 }
 
 
@@ -651,6 +671,7 @@ static void GL_RenderLightmappedPoly( msurface_t *surf ) {
 		}
 	}
 
+#if 0 // todo
 	if( is_dynamic ) {
 		unsigned	temp[ 128 * 128 ];
 		int			smax, tmax;
@@ -772,6 +793,7 @@ static void GL_RenderLightmappedPoly( msurface_t *surf ) {
 		//PGM
 		//==========
 	}
+#endif
 }
 
 /*
@@ -796,11 +818,13 @@ void R_DrawInlineBModel( void ) {
 
 	psurf = &currentmodel->surfaces[ currentmodel->firstmodelsurface ];
 
+#if 0 // todo
 	if( currententity->flags & RF_TRANSLUCENT ) {
 		glEnable( GL_BLEND );
 		glColor4f( 1, 1, 1, 0.25 );
 		GL_TexEnv( GL_MODULATE );
 	}
+#endif
 
 	//
 	// draw texture
@@ -827,11 +851,13 @@ void R_DrawInlineBModel( void ) {
 		}
 	}
 
+#if 0 // todo
 	if( ( currententity->flags & RF_TRANSLUCENT ) ) {
 		glDisable( GL_BLEND );
 		glColor4f( 1, 1, 1, 1 );
 		GL_TexEnv( GL_REPLACE );
 	}
+#endif
 }
 
 /*
@@ -865,6 +891,7 @@ void R_DrawBrushModel( entity_t *e ) {
 	if( R_CullBox( mins, maxs ) )
 		return;
 
+#if 0 // todo
 	glColor3f( 1, 1, 1 );
 	memset( gl_lms.lightmap_surfaces, 0, sizeof( gl_lms.lightmap_surfaces ) );
 
@@ -897,6 +924,7 @@ void R_DrawBrushModel( entity_t *e ) {
 	GL_EnableMultitexture( false );
 
 	glPopMatrix();
+#endif
 }
 
 /*
@@ -1075,6 +1103,7 @@ void R_DrawWorld( void ) {
 
 	gl_state.currenttextures[ 0 ] = gl_state.currenttextures[ 1 ] = -1;
 
+#if 0 // todo
 	glColor3f( 1, 1, 1 );
 	memset( gl_lms.lightmap_surfaces, 0, sizeof( gl_lms.lightmap_surfaces ) );
 	R_ClearSkyBox();
@@ -1104,6 +1133,7 @@ void R_DrawWorld( void ) {
 	R_DrawSkyBox();
 
 	R_DrawTriangleOutlines();
+#endif
 }
 
 
@@ -1209,9 +1239,11 @@ static void LM_UploadBlock( qboolean dynamic ) {
 		texture = gl_lms.current_lightmap_texture;
 	}
 
+#if 0 // todo
 	GL_Bind( gl_state.lightmap_textures + texture );
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
+#endif
 
 	if( dynamic ) {
 		int i;
@@ -1221,6 +1253,7 @@ static void LM_UploadBlock( qboolean dynamic ) {
 				height = gl_lms.allocated[ i ];
 		}
 
+#if 0 // todo
 		glTexSubImage2D( GL_TEXTURE_2D,
 			0,
 			0, 0,
@@ -1228,7 +1261,9 @@ static void LM_UploadBlock( qboolean dynamic ) {
 			GL_LIGHTMAP_FORMAT,
 			GL_UNSIGNED_BYTE,
 			gl_lms.lightmap_buffer );
+#endif
 	} else {
+#if 0 // todo
 		glTexImage2D( GL_TEXTURE_2D,
 			0,
 			gl_lms.internal_format,
@@ -1237,6 +1272,7 @@ static void LM_UploadBlock( qboolean dynamic ) {
 			GL_LIGHTMAP_FORMAT,
 			GL_UNSIGNED_BYTE,
 			gl_lms.lightmap_buffer );
+#endif
 		if( ++gl_lms.current_lightmap_texture == MAX_LIGHTMAPS )
 			ri.Sys_Error( ERR_DROP, "LM_UploadBlock() - MAX_LIGHTMAPS exceeded\n" );
 	}
@@ -1395,6 +1431,7 @@ void GL_BeginBuildingLightmaps( model_t *m ) {
 	r_framecount = 1;		// no dlightcache
 
 	GL_EnableMultitexture( true );
+#if 0 // todo
 	GL_SelectTexture( GL_TEXTURE1 );
 
 	/*
@@ -1460,6 +1497,7 @@ void GL_BeginBuildingLightmaps( model_t *m ) {
 		GL_LIGHTMAP_FORMAT,
 		GL_UNSIGNED_BYTE,
 		dummy );
+#endif
 }
 
 /*

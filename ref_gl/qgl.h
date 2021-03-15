@@ -27,7 +27,8 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #  include <windows.h>
 #endif
 
-#include <GL/glew.h>
+#include <bgfx/bgfx.h>
+#include <bgfx/platform.h>
 
-qboolean QGL_Init( void );
+bool QGL_Init( unsigned int w, unsigned int h, void *winHandle );
 void     QGL_Shutdown( void );

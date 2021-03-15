@@ -226,10 +226,10 @@ extern float r_world_matrix[16];
 
 void R_TranslatePlayerSkin(int playernum);
 void GL_Bind(int texnum);
-void GL_MBind(GLenum target, int texnum);
-void GL_TexEnv(GLenum value);
+void GL_MBind( unsigned int target, int texnum);
+void GL_TexEnv( unsigned int value);
 void GL_EnableMultitexture(qboolean enable);
-void GL_SelectTexture(GLenum);
+void GL_SelectTexture( unsigned int );
 
 void R_LightPoint(vec3_t p, vec3_t color);
 void R_PushDlights(void);
@@ -248,7 +248,7 @@ int R_Init(void* hinstance, void* hWnd);
 void R_Shutdown(void);
 
 void R_RenderView(refdef_t* fd);
-void GL_ScreenShot_f(void);
+void GL_ScreenShot_f();
 void R_DrawAliasModel(entity_t* e);
 void R_DrawBrushModel(entity_t* e);
 void R_DrawSpriteModel(entity_t* e);
@@ -311,8 +311,6 @@ image_t* GL_LoadPic( const char *name, byte* pic, int width, int height,
 image_t* GL_FindImage(const char* name, imagetype_t type);
 void GL_TextureMode(char* string);
 void GL_ImageList_f(void);
-
-void GL_SetTexturePalette(unsigned palette[256]);
 
 void GL_InitImages(void);
 void GL_ShutdownImages(void);

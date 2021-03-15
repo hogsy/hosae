@@ -31,11 +31,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../ref_gl/gl_local.h"
 #include "glw_win.h"
 
-void GLAPIENTRY QGL_ErrorCallback( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam ) {
+#if 0 // todo
+static void GLAPIENTRY QGL_ErrorCallback( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam ) {
 	Q_unused( source, type, id, severity, length, userParam );
 
 	fprintf( glw_state.log_fp, "GL ERROR: %s", message );
 }
+#endif
 
 /*
 ** QGL_Shutdown
@@ -55,23 +57,22 @@ void QGL_Shutdown( void ) {
 ** might be.
 **
 */
-qboolean QGL_Init( void ) {
-	glewExperimental = true;
-	GLenum err = glewInit();
-	if( err != GLEW_OK ) {
-		const char *msg = (const char *)glewGetErrorString( err );
-		ri.Con_Printf( PRINT_ALL, "Failed to initialize glew, %s\n", msg );
-		return false;
-	}
+bool QGL_Init( unsigned int w, unsigned int h, void *winHandle ) {
+	bgfx::PlatformData platformData;
+	platformData.nwh = glw_state.hWnd;
+	bgfx::setPlatformData( platformData );
 
-	glDebugMessageCallback( QGL_ErrorCallback, NULL );
-
-	gl_config.allow_cds = true;
-
-	return true;
+	bgfx::Init init;
+	init.type = bgfx::RendererType::Count;
+	init.resolution.width = w;
+	init.resolution.height = h;
+	init.resolution.reset = BGFX_RESET_VSYNC;
+	
+	return bgfx::init( init );
 }
 
 void GLimp_EnableLogging( qboolean enable ) {
+#if 0 // todo
 	if( !enable ) {
 		glDisable( GL_DEBUG_OUTPUT );
 
@@ -101,13 +102,16 @@ void GLimp_EnableLogging( qboolean enable ) {
 	glw_state.log_fp = fopen( buffer, "wt" );
 
 	fprintf( glw_state.log_fp, "%s\n", asctime( newtime ) );
+#endif
 }
 
 void GLimp_LogNewFrame( void ) {
+#if 0 // todo
 	if( glw_state.log_fp == NULL && gl_log->value ) {
 		// Probably lost handle to the log file!
 		GLimp_EnableLogging( gl_log->value );
 	}
 
 	fprintf( glw_state.log_fp, "*** R_BeginFrame ***\n" );
+#endif
 }

@@ -111,10 +111,12 @@ void GL_DrawAliasFrameLerp( dmdl_t *paliashdr, float backlerp ) {
 	else
 		alpha = 1.0;
 
+#if 0 // todo
 	// PMM - added double shell
 	if( currententity->flags & ( RF_SHELL_RED | RF_SHELL_GREEN | RF_SHELL_BLUE |
 		RF_SHELL_DOUBLE | RF_SHELL_HALF_DAM ) )
 		glDisable( GL_TEXTURE_2D );
+#endif
 
 	frontlerp = 1.0 - backlerp;
 
@@ -141,6 +143,7 @@ void GL_DrawAliasFrameLerp( dmdl_t *paliashdr, float backlerp ) {
 
 	GL_LerpVerts( paliashdr->num_xyz, v, ov, verts, lerp, move, frontv, backv );
 
+#if 0 // todo
 	if( gl_vertex_arrays->value ) {
 		glEnableClientState( GL_VERTEX_ARRAY );
 		glVertexPointer( 3, GL_FLOAT, 16, s_lerped );  // padded for SIMD
@@ -265,6 +268,7 @@ void GL_DrawAliasFrameLerp( dmdl_t *paliashdr, float backlerp ) {
 	if( currententity->flags & ( RF_SHELL_RED | RF_SHELL_GREEN | RF_SHELL_BLUE |
 		RF_SHELL_DOUBLE | RF_SHELL_HALF_DAM ) )
 		glEnable( GL_TEXTURE_2D );
+#endif
 }
 
 #if 1
@@ -282,6 +286,7 @@ void GL_DrawAliasShadow( dmdl_t *paliashdr, int posenum ) {
 	float lheight = currententity->origin[ 2 ] - lightspot[ 2 ];
 	float height = -lheight + 1.0;
 
+#if 0 // todo
 	while( 1 ) {
 		// get the vertex count and primitive type
 		count = *order++;
@@ -308,6 +313,7 @@ void GL_DrawAliasShadow( dmdl_t *paliashdr, int posenum ) {
 
 		glEnd();
 	}
+#endif
 }
 
 #endif
@@ -635,6 +641,8 @@ void R_DrawAliasModel( entity_t *e ) {
 
 	c_alias_polys += paliashdr->num_tris;
 
+#if 0 // todo
+
 	//
 	// draw all the triangles
 	//
@@ -751,4 +759,5 @@ void R_DrawAliasModel( entity_t *e ) {
 	}
 #endif
 	glColor4f( 1, 1, 1, 1 );
+#endif
 }
