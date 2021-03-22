@@ -271,12 +271,14 @@
     <ClCompile Include="gl_draw.cpp" />
     <ClCompile Include="gl_image.cpp" />
     <ClCompile Include="gl_light.cpp" />
+    <ClCompile Include="gl_local.cpp" />
     <ClCompile Include="gl_mesh.cpp" />
     <ClCompile Include="gl_model.cpp" />
     <ClCompile Include="gl_rmain.cpp" />
     <ClCompile Include="gl_rmisc.cpp" />
     <ClCompile Include="gl_rsurf.cpp" />
     <ClCompile Include="gl_warp.cpp" />
+    <ClCompile Include="ShaderProgram.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\client\ref.h" />

@@ -71,8 +71,8 @@ typedef struct
 {
 	char	name[MAX_QPATH];
 	char	cinfo[MAX_QPATH];
-	struct image_s	*skin;
-	struct image_s	*icon;
+	image_t	*skin;
+	image_t	*icon;
 	char	iconname[MAX_QPATH];
 	struct model_s	*model;
 	struct model_s	*weaponmodel[MAX_CLIENTWEAPONMODELS];
@@ -163,7 +163,7 @@ typedef struct
 	struct cmodel_s	*model_clip[MAX_MODELS];
 
 	struct sfx_s	*sound_precache[MAX_SOUNDS];
-	struct image_s	*image_precache[MAX_IMAGES];
+	struct image_t	*image_precache[MAX_IMAGES];
 
 	clientinfo_t	clientinfo[MAX_CLIENTS];
 	clientinfo_t	baseclientinfo;

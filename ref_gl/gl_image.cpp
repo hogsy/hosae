@@ -24,9 +24,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
 
-image_t		gltextures[ MAX_GLTEXTURES ];
-int			numgltextures;
-int			base_textureid;		// gltextures[i] = base_textureid+i
+static std::vector< image_t > textures;
 
 static byte			 intensitytable[ 256 ];
 static unsigned char gammatable[ 256 ];
@@ -35,12 +33,10 @@ cvar_t *intensity;
 
 unsigned	d_8to24table[ 256 ];
 
-qboolean GL_Upload8( byte *data, int width, int height, qboolean mipmap, qboolean is_sky );
-qboolean GL_Upload32( unsigned *data, int width, int height, qboolean mipmap );
-
+static bool GL_Upload8( image_t *image, byte *data, int width, int height, qboolean mipmap, qboolean is_sky );
+static bool GL_Upload32( image_t *image, unsigned *data, int width, int height, qboolean mipmap );
 
 int		gl_solid_format = 3;
-int		gl_alpha_format = 4;
 
 int		gl_tex_solid_format = 3;
 int		gl_tex_alpha_format = 4;
@@ -95,7 +91,8 @@ void GL_TexEnv( unsigned int mode ) {
 #endif
 }
 
-void GL_Bind( int texnum ) {
+void GL_Bind( bgfx::TextureHandle texnum ) {
+#if 0 // todo
 	extern	image_t *draw_chars;
 
 	if( gl_nobind->value && draw_chars )		// performance evaluation option
@@ -103,14 +100,13 @@ void GL_Bind( int texnum ) {
 	if( gl_state.currenttextures[ gl_state.currenttmu ] == texnum )
 		return;
 	gl_state.currenttextures[ gl_state.currenttmu ] = texnum;
-#if 0 // todo
 	glBindTexture( GL_TEXTURE_2D, texnum );
 #endif
 }
 
 void GL_MBind( unsigned int target, int texnum ) {
-	GL_SelectTexture( target );
 #if 0 // todo
+	GL_SelectTexture( target );
 	if( target == GL_TEXTURE0 ) {
 		if( gl_state.currenttextures[ 0 ] == texnum )
 			return;
@@ -118,8 +114,8 @@ void GL_MBind( unsigned int target, int texnum ) {
 		if( gl_state.currenttextures[ 1 ] == texnum )
 			return;
 	}
-#endif
 	GL_Bind( texnum );
+#endif
 }
 
 #if 0 // todo
@@ -250,29 +246,18 @@ void GL_TextureSolidMode( char *string ) {
 #endif
 }
 
-/*
-===============
-GL_ImageList_f
-===============
-*/
-void	GL_ImageList_f( void ) {
-	int		i;
-	image_t *image;
-	int		texels;
-	const char *palstrings[ 2 ] =
-	{
-		"RGB",
-		"PAL"
-	};
-
+void GL_ImageList_f( void ) {
 	ri.Con_Printf( PRINT_ALL, "------------------\n" );
-	texels = 0;
 
-	for( i = 0, image = gltextures; i < numgltextures; i++, image++ ) {
-		if( image->texnum <= 0 )
+	unsigned int texels = 0;
+	for( const auto &i : textures ) {
+		if( !bgfx::isValid( i.handle ) ) {
 			continue;
-		texels += image->upload_width * image->upload_height;
-		switch( image->type ) {
+		}
+
+		texels += i.upload_width * i.upload_height;
+
+		switch( i.type ) {
 		case it_skin:
 			ri.Con_Printf( PRINT_ALL, "M" );
 			break;
@@ -290,76 +275,10 @@ void	GL_ImageList_f( void ) {
 			break;
 		}
 
-		ri.Con_Printf( PRINT_ALL, " %3i %3i %s: %s\n",
-			image->upload_width, image->upload_height, palstrings[ image->paletted ], image->name );
+		ri.Con_Printf( PRINT_ALL, " %3i %3i: %s\n", i.upload_width, i.upload_height, i.name );
 	}
+
 	ri.Con_Printf( PRINT_ALL, "Total texel count (not counting mipmaps): %i\n", texels );
-}
-
-
-/*
-=============================================================================
-
-  scrap allocation
-
-  Allocate all the little status bar obejcts into a single texture
-  to crutch up inefficient hardware / drivers
-
-=============================================================================
-*/
-
-#define	MAX_SCRAPS		1
-#define	BLOCK_WIDTH		256
-#define	BLOCK_HEIGHT	256
-
-int			scrap_allocated[ MAX_SCRAPS ][ BLOCK_WIDTH ];
-byte		scrap_texels[ MAX_SCRAPS ][ BLOCK_WIDTH * BLOCK_HEIGHT ];
-qboolean	scrap_dirty;
-
-// returns a texture number and the position inside it
-int Scrap_AllocBlock( int w, int h, int *x, int *y ) {
-	int		i, j;
-	int		best, best2;
-	int		texnum;
-
-	for( texnum = 0; texnum < MAX_SCRAPS; texnum++ ) {
-		best = BLOCK_HEIGHT;
-
-		for( i = 0; i < BLOCK_WIDTH - w; i++ ) {
-			best2 = 0;
-
-			for( j = 0; j < w; j++ ) {
-				if( scrap_allocated[ texnum ][ i + j ] >= best )
-					break;
-				if( scrap_allocated[ texnum ][ i + j ] > best2 )
-					best2 = scrap_allocated[ texnum ][ i + j ];
-			}
-			if( j == w ) {	// this is a valid spot
-				*x = i;
-				*y = best = best2;
-			}
-		}
-
-		if( best + h > BLOCK_HEIGHT )
-			continue;
-
-		for( i = 0; i < w; i++ )
-			scrap_allocated[ texnum ][ *x + i ] = best + h;
-
-		return texnum;
-	}
-
-	return -1;
-	//	Sys_Error ("Scrap_AllocBlock: full");
-}
-
-int	scrap_uploads;
-
-void Scrap_Upload( void ) {
-	scrap_uploads++;
-	GL_Bind( TEXNUM_SCRAPS );
-	GL_Upload8( scrap_texels[ 0 ], BLOCK_WIDTH, BLOCK_HEIGHT, false, false );
-	scrap_dirty = false;
 }
 
 /*
@@ -370,12 +289,6 @@ PCX LOADING
 =================================================================
 */
 
-
-/*
-==============
-LoadPCX
-==============
-*/
 void LoadPCX( const char *filename, byte **pic, byte **palette, int *width, int *height ) {
 	byte *raw;
 	pcx_t *pcx;
@@ -422,14 +335,14 @@ void LoadPCX( const char *filename, byte **pic, byte **palette, int *width, int 
 		return;
 	}
 
-	out = static_cast< byte* >( malloc( ( pcx->ymax + 1 ) * ( pcx->xmax + 1 ) ) );
+	out = static_cast<byte *>( malloc( ( pcx->ymax + 1 ) * ( pcx->xmax + 1 ) ) );
 
 	*pic = out;
 
 	pix = out;
 
 	if( palette ) {
-		*palette = static_cast< byte * >( malloc( 768 ) );
+		*palette = static_cast<byte *>( malloc( 768 ) );
 		memcpy( *palette, (byte *)pcx + len - 768, 768 );
 	}
 
@@ -667,19 +580,8 @@ void GL_MipMap( byte *in, int width, int height ) {
 	}
 }
 
-int		upload_width, upload_height;
-qboolean uploaded_paletted;
-
-qboolean GL_Upload32( unsigned *data, int width, int height, qboolean mipmap ) {
-	int			samples;
-	unsigned	scaled[ 256 * 256 ];
-	int			scaled_width, scaled_height;
-	int			i, c;
-	byte *scan;
-	int comp;
-
-	uploaded_paletted = false;
-
+static bool GL_Upload32( image_t *image, unsigned *data, int width, int height, qboolean mipmap ) {
+	unsigned int scaled_width, scaled_height;
 	for( scaled_width = 1; scaled_width < width; scaled_width <<= 1 )
 		;
 	if( gl_round_down->value && scaled_width > width && mipmap )
@@ -706,62 +608,28 @@ qboolean GL_Upload32( unsigned *data, int width, int height, qboolean mipmap ) {
 	if( scaled_height < 1 )
 		scaled_height = 1;
 
-	upload_width = scaled_width;
-	upload_height = scaled_height;
+	image->upload_width = scaled_width;
+	image->upload_height = scaled_height;
 
-	if( scaled_width * scaled_height > sizeof( scaled ) / 4 )
+	unsigned int scaled[ 256 * 256 ];
+	if( scaled_width * scaled_height > sizeof( scaled ) / 4 ) {
 		ri.Sys_Error( ERR_DROP, "GL_Upload32: too big" );
+	}
 
 	// scan the texture for any non-255 alpha
-	c = width * height;
-	scan = ( (byte *)data ) + 3;
-	samples = gl_solid_format;
-	for( i = 0; i < c; i++, scan += 4 ) {
+	unsigned int c = width * height;
+	byte *scan = ( (byte *)data ) + 3;
+	bool hasAlpha = false;
+	for( unsigned int i = 0; i < c; i++, scan += 4 ) {
 		if( *scan != 255 ) {
-			samples = gl_alpha_format;
+			hasAlpha = true;
 			break;
 		}
 	}
 
-	if( samples == gl_solid_format )
-		comp = gl_tex_solid_format;
-	else if( samples == gl_alpha_format )
-		comp = gl_tex_alpha_format;
-	else {
-		ri.Con_Printf( PRINT_ALL,
-			"Unknown number of texture components %i\n",
-			samples );
-		comp = samples;
-	}
-
-#if 0
-	if( mipmap )
-		gluBuild2DMipmaps( GL_TEXTURE_2D, samples, width, height, GL_RGBA, GL_UNSIGNED_BYTE, trans );
-	else if( scaled_width == width && scaled_height == height )
-		qglTexImage2D( GL_TEXTURE_2D, 0, comp, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, trans );
-	else {
-		gluScaleImage( GL_RGBA, width, height, GL_UNSIGNED_BYTE, trans,
-			scaled_width, scaled_height, GL_UNSIGNED_BYTE, scaled );
-		qglTexImage2D( GL_TEXTURE_2D, 0, comp, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled );
-	}
-
-	if( scaled_width == width && scaled_height == height ) {
-		if( !mipmap ) {
-			glTexImage2D( GL_TEXTURE_2D, 0, comp, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
-			goto done;
-		}
-		memcpy( scaled, data, width * height * 4 );
-	} else
-		GL_ResampleTexture( data, width, height, scaled, scaled_width, scaled_height );
-
-	//GL_LightScaleTexture( scaled, scaled_width, scaled_height, !mipmap );
-
-	glTexImage2D( GL_TEXTURE_2D, 0, comp, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled );
-
+#if 0 // todo
 	if( mipmap ) {
-		int		miplevel;
-
-		miplevel = 0;
+		unsigned int miplevel = 0;
 		while( scaled_width > 1 || scaled_height > 1 ) {
 			GL_MipMap( (byte *)scaled, scaled_width, scaled_height );
 			scaled_width >>= 1;
@@ -774,6 +642,22 @@ qboolean GL_Upload32( unsigned *data, int width, int height, qboolean mipmap ) {
 			glTexImage2D( GL_TEXTURE_2D, miplevel, comp, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled );
 		}
 	}
+#endif
+	
+	const bgfx::Memory *memoryPtr = bgfx::makeRef( data, width * height * ( hasAlpha ? 4 : 3 ) );
+	image->handle = bgfx::createTexture2D( width, height, false, 1, hasAlpha ? bgfx::TextureFormat::RGBA8 : bgfx::TextureFormat::RGB8, 0U, memoryPtr );
+
+#if 0
+	if( scaled_width == width && scaled_height == height ) {
+		if( !mipmap ) {
+			glTexImage2D( GL_TEXTURE_2D, 0, comp, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data );
+			goto done;
+		}
+		memcpy( scaled, data, width * height * 4 );
+	} else
+		GL_ResampleTexture( data, width, height, scaled, scaled_width, scaled_height );
+
+	glTexImage2D( GL_TEXTURE_2D, 0, comp, scaled_width, scaled_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, scaled );
 done:;
 
 	if( mipmap ) {
@@ -784,34 +668,11 @@ done:;
 		glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, gl_filter_max );
 	}
 #endif
-	return ( samples == gl_alpha_format );
+
+	return hasAlpha;
 }
 
-/*
-===============
-GL_Upload8
-
-Returns has_alpha
-===============
-*/
-/*
-static qboolean IsPowerOf2( int value )
-{
-	int i = 1;
-
-
-	while ( 1 )
-	{
-		if ( value == i )
-			return true;
-		if ( i > value )
-			return false;
-		i <<= 1;
-	}
-}
-*/
-
-qboolean GL_Upload8( byte *data, int width, int height, qboolean mipmap, qboolean is_sky ) {
+static bool GL_Upload8( image_t *image, byte *data, int width, int height, qboolean mipmap, qboolean is_sky ) {
 	unsigned	trans[ 640 * 256 ];
 	int			i, s;
 	int			p;
@@ -845,88 +706,28 @@ qboolean GL_Upload8( byte *data, int width, int height, qboolean mipmap, qboolea
 		}
 	}
 
-	return GL_Upload32( trans, width, height, mipmap );
+	return GL_Upload32( image, trans, width, height, mipmap );
 }
 
-
-/*
-================
-GL_LoadPic
-
-This is also used as an entry point for the generated r_notexture
-================
-*/
+/**
+ * This is also used as an entry point for the generated r_notexture
+ */
 image_t *GL_LoadPic( const char *name, byte *pic, int width, int height, imagetype_t type, int bits ) {
-	image_t *image;
-	int			i;
+	image_t image = image_t( name, width, height, type );
 
-	// find a free image_t
-	for( i = 0, image = gltextures; i < numgltextures; i++, image++ ) {
-		if( !image->texnum )
-			break;
-	}
-	if( i == numgltextures ) {
-		if( numgltextures == MAX_GLTEXTURES )
-			ri.Sys_Error( ERR_DROP, "MAX_GLTEXTURES" );
-		numgltextures++;
-	}
-	image = &gltextures[ i ];
-
-	if( strlen( name ) >= sizeof( image->name ) )
-		ri.Sys_Error( ERR_DROP, "Draw_LoadPic: \"%s\" is too long", name );
-	strcpy( image->name, name );
-	image->registration_sequence = registration_sequence;
-
-	image->width = width;
-	image->height = height;
-	image->type = type;
-
-	if( type == it_skin && bits == 8 )
+	if( type == it_skin && bits == 8 ) {
 		R_FloodFillSkin( pic, width, height );
-
-	// load little pics into the scrap
-	if( image->type == it_pic && bits == 8
-		&& image->width < 64 && image->height < 64 ) {
-		int		x, y;
-		int		i, j, k;
-		int		texnum;
-
-		texnum = Scrap_AllocBlock( image->width, image->height, &x, &y );
-		if( texnum == -1 )
-			goto nonscrap;
-		scrap_dirty = true;
-
-		// copy the texels into the scrap block
-		k = 0;
-		for( i = 0; i < image->height; i++ )
-			for( j = 0; j < image->width; j++, k++ )
-				scrap_texels[ texnum ][ ( y + i ) * BLOCK_WIDTH + x + j ] = pic[ k ];
-		image->texnum = TEXNUM_SCRAPS + texnum;
-		image->scrap = true;
-		image->has_alpha = true;
-		image->sl = ( x + 0.01 ) / (float)BLOCK_WIDTH;
-		image->sh = ( x + image->width - 0.01 ) / (float)BLOCK_WIDTH;
-		image->tl = ( y + 0.01 ) / (float)BLOCK_WIDTH;
-		image->th = ( y + image->height - 0.01 ) / (float)BLOCK_WIDTH;
-	} else {
-	nonscrap:
-		image->scrap = false;
-		image->texnum = TEXNUM_IMAGES + ( image - gltextures );
-		GL_Bind( image->texnum );
-		if( bits == 8 )
-			image->has_alpha = GL_Upload8( pic, width, height, ( image->type != it_pic && image->type != it_sky ), image->type == it_sky );
-		else
-			image->has_alpha = GL_Upload32( (unsigned *)pic, width, height, ( image->type != it_pic && image->type != it_sky ) );
-		image->upload_width = upload_width;		// after power of 2 and scales
-		image->upload_height = upload_height;
-		image->paletted = uploaded_paletted;
-		image->sl = 0;
-		image->sh = 1;
-		image->tl = 0;
-		image->th = 1;
 	}
 
-	return image;
+	if( bits == 8 ) {
+		image.has_alpha = GL_Upload8( &image, pic, width, height, ( image.type != it_pic && image.type != it_sky ), image.type == it_sky );
+	} else {
+		image.has_alpha = GL_Upload32( &image, (unsigned *)pic, width, height, ( image.type != it_pic && image.type != it_sky ) );
+	}
+
+	textures.push_back( image );
+
+	return &textures.back();
 }
 
 /*
@@ -937,26 +738,26 @@ Finds or loads the given image
 ===============
 */
 image_t *GL_FindImage( const char *name, imagetype_t type ) {
-	image_t *image;
-	int		i, len;
 	byte *pic, *palette;
 	int		width, height;
 
-	if( !name )
+	if( !name ) {
 		return NULL;	//	ri.Sys_Error (ERR_DROP, "GL_FindImage: NULL name");
-	len = strlen( name );
-	if( len < 5 )
+	}
+
+	size_t len = strlen( name );
+	if( len < 5 ) {
 		return NULL;	//	ri.Sys_Error (ERR_DROP, "GL_FindImage: bad name: %s", name);
+	}
 
 	// look for it
-	for( i = 0, image = gltextures; i < numgltextures; i++, image++ ) {
-		if( !strcmp( name, image->name ) ) {
-			image->registration_sequence = registration_sequence;
-			return image;
+	for( auto &i : textures ) {
+		if( i.name == name ) {
+			return &i;
 		}
 	}
 
-	image = NULL;
+	image_t *image = NULL;
 
 	//
 	// load the pic from disk
@@ -965,14 +766,12 @@ image_t *GL_FindImage( const char *name, imagetype_t type ) {
   // Right, this is kinda gross but Anachronox seems to strip the extension
   // from the filename and then load whatever standard formats it supports
 
-	typedef struct ImageLoader {
+	struct ImageLoader {
 		const char *extension;
 		unsigned int depth;
 		void( *Load8bpp )( const char *filename, byte **pic, byte **palette, int *width, int *height );
 		void( *Load32bpp )( const char *filename, byte **pic, int *width, int *height );
-	} ImageLoader;
-
-	ImageLoader loaders[] = {
+	} loaders[] = {
 		{ "tga", 32, NULL, LoadImage32 },
 		{ "png", 32, NULL, LoadImage32 },
 		{ "bmp", 32, NULL, LoadImage32 },
@@ -982,7 +781,7 @@ image_t *GL_FindImage( const char *name, imagetype_t type ) {
 	char uname[ MAX_QPATH ];
 	strcpy( uname, name );
 
-	for(auto & loader : loaders) {
+	for( auto &loader : loaders ) {
 		uname[ len - 3 ] = '\0';
 		strcat( uname, loader.extension );
 
@@ -1000,7 +799,7 @@ image_t *GL_FindImage( const char *name, imagetype_t type ) {
 
 		image = GL_LoadPic( uname, pic, width, height, type, loader.depth );
 		// HACK: store the original name for comparing later!
-		strcpy( image->name, name );
+		image->name = name;
 	}
 
 	if( image == nullptr ) {
@@ -1014,14 +813,7 @@ image_t *GL_FindImage( const char *name, imagetype_t type ) {
 	return image;
 }
 
-
-
-/*
-===============
-R_RegisterSkin
-===============
-*/
-struct image_s *R_RegisterSkin( const char *name ) {
+struct image_t *R_RegisterSkin( const char *name ) {
 	return GL_FindImage( name, it_skin );
 }
 
@@ -1051,18 +843,12 @@ void GL_FreeUnusedImages( void ) {
 		if( image->type == it_pic )
 			continue;		// don't free pics
 		// free it
-		glDeleteTextures( 1, ( GLuint * ) &image->texnum );
+		glDeleteTextures( 1, (GLuint *)&image->texnum );
 		memset( image, 0, sizeof( *image ) );
 	}
 #endif
 }
 
-
-/*
-===============
-Draw_GetPalette
-===============
-*/
 int Draw_GetPalette( void ) {
 	int		i;
 	int		r, g, b;
@@ -1093,13 +879,7 @@ int Draw_GetPalette( void ) {
 	return 0;
 }
 
-
-/*
-===============
-GL_InitImages
-===============
-*/
-void	GL_InitImages( void ) {
+void GL_InitImages( void ) {
 	int		i, j;
 	float	g = vid_gamma->value;
 
@@ -1142,22 +922,10 @@ void	GL_InitImages( void ) {
 	}
 }
 
-/*
-===============
-GL_ShutdownImages
-===============
-*/
-void	GL_ShutdownImages( void ) {
-#if 0 // todo
-	int		i;
-	image_t *image;
-
-	for( i = 0, image = gltextures; i < numgltextures; i++, image++ ) {
-		if( !image->registration_sequence )
-			continue;		// free image_t slot
-		// free it
-		glDeleteTextures( 1, ( GLuint* ) &image->texnum );
-		memset( image, 0, sizeof( *image ) );
+void GL_ShutdownImages( void ) {
+	for( auto &i : textures ) {
+		bgfx::destroy( i.handle );
 	}
-#endif
+
+	textures.clear();
 }

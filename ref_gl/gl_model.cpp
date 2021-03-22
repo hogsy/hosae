@@ -1106,8 +1106,8 @@ struct model_s *R_RegisterModel( const char *name ) {
 			for( int i = 0; i < sprout->numframes; i++ )
 				mod->skins[ i ] = GL_FindImage( sprout->frames[ i ].name, it_sprite );
 		} else if( mod->type == mod_brush ) {
-			for( int i = 0; i < mod->numtexinfo; i++ )
-				mod->texinfo[ i ].image->registration_sequence = registration_sequence;
+			//for( int i = 0; i < mod->numtexinfo; i++ )
+			//	mod->texinfo[ i ].image->registration_sequence = registration_sequence;
 		}
 	}
 	return mod;

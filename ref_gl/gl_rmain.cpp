@@ -687,8 +687,9 @@ void R_SetupGL( void ) {
 	w = x2 - x;
 	h = y - y2;
 
+	bgfx::setViewRect( 0, x, y2, w, h );
+
 #if 0 // todo
-	glViewport( x, y2, w, h );
 
 	//
 	// set up projection matrix
@@ -1402,13 +1403,13 @@ void R_DrawBeam( entity_t *e ) {
 
 void R_BeginRegistration( char *map );
 struct model_s *R_RegisterModel( const char *name );
-struct image_s *R_RegisterSkin( const char *name );
+image_t *R_RegisterSkin( const char *name );
 void R_SetSky( char *name, float rotate, vec3_t axis );
 void R_EndRegistration( void );
 
 void R_RenderFrame( refdef_t *fd );
 
-struct image_s *Draw_FindPic( const char *name );
+image_t *Draw_FindPic( const char *name );
 
 void Draw_Pic( int x, int y, const char *name );
 void Draw_Char( int x, int y, int c );

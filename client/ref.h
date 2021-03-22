@@ -72,7 +72,7 @@ typedef struct entity_s
 	int		lightstyle;				// for flashing entities
 	float	alpha;					// ignore if RF_TRANSLUCENT isn't set
 
-	struct image_s	*skin;			// NULL for inline skin
+	struct image_t	*skin;			// NULL for inline skin
 	unsigned int		flags;
 
 } entity_t;
@@ -156,8 +156,8 @@ typedef struct
 	// slash will not use the "pics/" prefix or the ".pcx" postfix)
 	void	(*BeginRegistration) (char *map);
 	struct model_s *(*RegisterModel) (const char *name);
-	struct image_s *(*RegisterSkin) (const char *name);
-	struct image_s *(*RegisterPic) (const char *name);
+	struct image_t *(*RegisterSkin) (const char *name);
+	struct image_t *(*RegisterPic) (const char *name);
 	void	(*SetSky) (char *name, float rotate, vec3_t axis);
 	void	(*EndRegistration) (void);
 

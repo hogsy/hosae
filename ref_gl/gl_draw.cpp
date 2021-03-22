@@ -24,9 +24,6 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 image_t *draw_chars;
 
-extern	qboolean	scrap_dirty;
-void Scrap_Upload( void );
-
 
 /*
 ===============
@@ -36,8 +33,8 @@ Draw_InitLocal
 void Draw_InitLocal( void ) {
 	// load console characters (don't bilerp characters)
 	draw_chars = GL_FindImage( "graphics/fonts/conchars.pcx", it_pic );
-	GL_Bind( draw_chars->texnum );
 #if 0 // todo
+	GL_Bind( draw_chars->texnum );
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
 #endif
@@ -138,9 +135,6 @@ void Draw_StretchPic( int x, int y, int w, int h, const char *pic ) {
 		return;
 	}
 
-	if( scrap_dirty )
-		Scrap_Upload();
-
 #if 0 // todo
 	if( ( ( gl_config.renderer == GL_RENDERER_MCD ) || ( gl_config.renderer & GL_RENDERER_RENDITION ) ) && !gl->has_alpha )
 		glDisable( GL_ALPHA_TEST );
@@ -176,8 +170,6 @@ void Draw_Pic( int x, int y, const char *pic ) {
 		ri.Con_Printf( PRINT_ALL, "Can't find pic: %s\n", pic );
 		return;
 	}
-	if( scrap_dirty )
-		Scrap_Upload();
 
 #if 0 // todo
 	if( ( ( gl_config.renderer == GL_RENDERER_MCD ) || ( gl_config.renderer & GL_RENDERER_RENDITION ) ) && !gl->has_alpha )
@@ -317,6 +309,7 @@ Draw_StretchRaw
 extern unsigned	r_rawpalette[ 256 ];
 
 void Draw_StretchRaw( int x, int y, int w, int h, int cols, int rows, byte *data ) {
+#if 0 // todo
 	int			i, j, trows;
 	byte *source;
 	int			frac, fracstep;
@@ -353,7 +346,6 @@ void Draw_StretchRaw( int x, int y, int w, int h, int cols, int rows, byte *data
 		}
 	}
 
-#if 0 // todo
 	glTexImage2D( GL_TEXTURE_2D, 0, gl_tex_solid_format, 256, 256, 0, GL_RGBA, GL_UNSIGNED_BYTE, image32 );
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
 	glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
@@ -374,8 +366,8 @@ void Draw_StretchRaw( int x, int y, int w, int h, int cols, int rows, byte *data
 
 	if( ( gl_config.renderer == GL_RENDERER_MCD ) || ( gl_config.renderer & GL_RENDERER_RENDITION ) )
 		glEnable( GL_ALPHA_TEST );
-#endif
 
 	free( image32 );
+#endif
 }
 

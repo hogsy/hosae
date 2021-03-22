@@ -31,20 +31,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 #include "../ref_gl/gl_local.h"
 #include "glw_win.h"
 
-#if 0 // todo
-static void GLAPIENTRY QGL_ErrorCallback( GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam ) {
-	Q_unused( source, type, id, severity, length, userParam );
-
-	fprintf( glw_state.log_fp, "GL ERROR: %s", message );
-}
-#endif
-
 /*
 ** QGL_Shutdown
 **
 ** Unloads the specified DLL then nulls out all the proc pointers.
 */
 void QGL_Shutdown( void ) {
+	bgfx::shutdown();
 }
 
 /*
@@ -68,50 +61,19 @@ bool QGL_Init( unsigned int w, unsigned int h, void *winHandle ) {
 	init.resolution.height = h;
 	init.resolution.reset = BGFX_RESET_VSYNC;
 	
-	return bgfx::init( init );
+	if( !bgfx::init( init ) ) {
+		return false;
+	}
+
+#if defined( _DEBUG )
+	bgfx::setDebug( BGFX_DEBUG_TEXT | BGFX_DEBUG_STATS );
+#endif
+
+	return true;
 }
 
 void GLimp_EnableLogging( qboolean enable ) {
-#if 0 // todo
-	if( !enable ) {
-		glDisable( GL_DEBUG_OUTPUT );
-
-		if( glw_state.log_fp != NULL ) {
-			fclose( glw_state.log_fp );
-			glw_state.log_fp = NULL;
-		}
-
-		return;
-	}
-
-	if( glw_state.log_fp != NULL ) {
-		// Assume logging has already been enabled
-		return;
-	}
-
-	glEnable( GL_DEBUG_OUTPUT );
-
-	time_t aclock;
-	time( &aclock );
-
-	struct tm *newtime = localtime( &aclock );
-	asctime( newtime );
-
-	char buffer[ 1024 ];
-	Com_sprintf( buffer, sizeof( buffer ), "%s/gl.log", ri.FS_Gamedir() );
-	glw_state.log_fp = fopen( buffer, "wt" );
-
-	fprintf( glw_state.log_fp, "%s\n", asctime( newtime ) );
-#endif
 }
 
 void GLimp_LogNewFrame( void ) {
-#if 0 // todo
-	if( glw_state.log_fp == NULL && gl_log->value ) {
-		// Probably lost handle to the log file!
-		GLimp_EnableLogging( gl_log->value );
-	}
-
-	fprintf( glw_state.log_fp, "*** R_BeginFrame ***\n" );
-#endif
 }

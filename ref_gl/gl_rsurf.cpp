@@ -337,7 +337,6 @@ void R_BlendLightmaps( void ) {
 			}
 		}
 	}
-#endif
 
 	if( currentmodel == r_worldmodel )
 		c_visible_lightmaps = 0;
@@ -433,6 +432,7 @@ void R_BlendLightmaps( void ) {
 	glDisable( GL_BLEND );
 	glBlendFunc( GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA );
 	glDepthMask( 1 );
+#endif
 #endif
 }
 
@@ -1273,6 +1273,7 @@ static void LM_UploadBlock( qboolean dynamic ) {
 			GL_UNSIGNED_BYTE,
 			gl_lms.lightmap_buffer );
 #endif
+
 		if( ++gl_lms.current_lightmap_texture == MAX_LIGHTMAPS )
 			ri.Sys_Error( ERR_DROP, "LM_UploadBlock() - MAX_LIGHTMAPS exceeded\n" );
 	}
