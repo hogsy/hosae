@@ -17,6 +17,8 @@ along with this program; if not, write to the Free Software
 Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 */
+#include <ctype.h>
+
 #include "q_shared.h"
 
 #define DEG2RAD( a ) ( a * M_PI ) / 180.0F
@@ -555,7 +557,7 @@ void COM_StripExtension( char *in, char *out ) {
 COM_FileExtension
 ============
 */
-char *COM_FileExtension( char *in ) {
+const char *COM_FileExtension( char *in ) {
 	static char exten[ 8 ];
 	int		i;
 
@@ -750,7 +752,7 @@ varargs versions of all text functions.
 FIXME: make this buffer size safe someday
 ============
 */
-char *va( char *format, ... ) {
+char *va( const char *format, ... ) {
 	va_list		argptr;
 	static char		string[ 1024 ];
 
@@ -762,7 +764,143 @@ char *va( char *format, ... ) {
 }
 
 
-char	com_token[ MAX_TOKEN_CHARS ];
+static char com_token[ MAX_TOKEN_CHARS ];
+
+/*
+==============
+Script_GetLineLength
+
+Check how long the current line is, so we can allocate a buffer to store it.
+==============
+*/
+size_t Script_GetLineLength( const char *data ) {
+	const char *p = data;
+	while( *p != '\0' && *p != '\n' && *p != '\r' ) {
+		p++;
+	}
+
+	return p - data;
+}
+
+/*
+==============
+Script_GetLine
+
+Read the line into the specified buffer.
+==============
+*/
+const char *Script_GetLine( const char *data, char *dest, size_t destSize ) {
+	const char *p = data;
+	char *d = dest;
+
+	size_t length = Script_GetLineLength( data );
+	for( size_t i = 0; i < length; ++i ) {
+		*d++ = *p++;
+		if( d - dest >= destSize ) {
+#if defined( _DEBUG )
+			assert( 0 );
+#endif
+			break;
+		}
+	}
+
+	return p;
+}
+
+const char *Script_SkipWhitespace( const char *data ) {
+	int c;
+	while( ( c = *data ) <= ' ' ) {
+		if( c == 0 ) {
+			return nullptr;
+		}
+		data++;
+	}
+
+	return data;
+}
+
+const char *Script_SkipComment( const char *data ) {
+	// Single line comment
+	if( data[ 0 ] == '/' && data[ 1 ] == '/' ) {
+		while( *data && *data != '\n' ) {
+			data++;
+		}
+	}
+
+	// Multi line comment
+	if( data[ 0 ] == '/' && data[ 1 ] == '*' ) {
+		while( *data && data[ 0 ] != '*' && data[ 1 ] != '/' ) {
+			data++;
+		}
+	}
+
+	return data;
+}
+
+/*
+==============
+Script_Parse
+
+Like COM_Parse, but let's you specify what deliminator you want to use before
+returning a token.
+==============
+*/
+const char *Script_Parse( const char **buffer, const char *deliminator ) {
+	com_token[ 0 ] = '\0';
+
+	const char *data = *buffer;
+	if( data == nullptr ) {
+		*buffer = nullptr;
+		return "";
+	}
+
+	int length = 0;
+	while( true ) {
+		data = Script_SkipWhitespace( data );
+		if( data == nullptr ) {
+			*buffer = nullptr;
+			return "";
+		}
+
+		const char *oldPos = data;
+		data = Script_SkipComment( data );
+		if( data != oldPos ) {
+			continue;
+		}
+
+		while( true ) {
+			char c = *data++;
+
+			// Check for the deliminators
+			const char *d = deliminator;
+			while( *d ) {
+				if( c == '\0' || *d == c ) {
+					*buffer = data;
+					com_token[ length ] = '\0';
+					return com_token;
+				}
+
+				d++;
+			}
+
+			if( length < MAX_TOKEN_CHARS ) {
+				com_token[ length ] = c;
+				length++;
+			}
+		}
+
+		if( length >= MAX_TOKEN_CHARS ) {
+			Com_Printf( "Token exceeded %i chars, discarded.\n", MAX_TOKEN_CHARS );
+			length = 0;
+		}
+
+		com_token[ length ] = '\0';
+		break;
+	}
+
+	*buffer = data;
+	return com_token;
+}
 
 /*
 ==============
@@ -771,38 +909,32 @@ COM_Parse
 Parse a token out of a string
 ==============
 */
-char *COM_Parse( char **data_p ) {
-	int		c;
-	int		len;
-	char *data;
-
-	data = *data_p;
-	len = 0;
+const char *COM_Parse( const char **data_p ) {
 	com_token[ 0 ] = 0;
 
+	const char *data = *data_p;
 	if( !data ) {
-		*data_p = NULL;
+		*data_p = nullptr;
 		return "";
 	}
 
 	// skip whitespace
 skipwhite:
-	while( ( c = *data ) <= ' ' ) {
-		if( c == 0 ) {
-			*data_p = NULL;
-			return "";
-		}
-		data++;
+	data = Script_SkipWhitespace( data );
+	if( data == nullptr ) {
+		*data_p = nullptr;
+		return "";
 	}
 
-	// skip // comments
-	if( c == '/' && data[ 1 ] == '/' ) {
-		while( *data && *data != '\n' )
-			data++;
+	const char *oldPos = data;
+	data = Script_SkipComment( data );
+	if( data != oldPos ) {
 		goto skipwhite;
 	}
 
 	// handle quoted strings specially
+	int len = 0;
+	int c = *data;
 	if( c == '\"' ) {
 		data++;
 		while( 1 ) {
@@ -830,7 +962,7 @@ skipwhite:
 	} while( c > 32 );
 
 	if( len == MAX_TOKEN_CHARS ) {
-		//		Com_Printf ("Token exceeded %i chars, discarded.\n", MAX_TOKEN_CHARS);
+		Com_Printf( "Token exceeded %i chars, discarded.\n", MAX_TOKEN_CHARS );
 		len = 0;
 	}
 	com_token[ len ] = 0;
@@ -866,7 +998,7 @@ void Com_PageInMemory( byte *buffer, int size ) {
 */
 
 // FIXME: replace all Q_stricmp with Q_strcasecmp
-int Q_stricmp( char *s1, char *s2 ) {
+int Q_stricmp( const char *s1, const char *s2 ) {
 #if defined(WIN32)
 	return _stricmp( s1, s2 );
 #else
@@ -898,8 +1030,25 @@ int Q_strncasecmp( const char *s1, const char *s2, int n ) {
 	return 0;		// strings are equal
 }
 
-int Q_strcasecmp( char *s1, char *s2 ) {
+int Q_strcasecmp( const char *s1, const char *s2 ) {
 	return Q_strncasecmp( s1, s2, 99999 );
+}
+
+char *Q_strtolower( char *s ) {
+	for( size_t i = 0; s[ i ] != '\0'; ++i ) {
+		s[ i ] = (char)tolower( s[ i ] );
+	}
+	return s;
+}
+
+char *Q_strntolower( char *s, size_t n ) {
+	for( size_t i = 0; i < n; ++i ) {
+		if( s[ i ] == '\0' ) {
+			break;
+		}
+		s[ i ] = (char)tolower( s[ i ] );
+	}
+	return s;
 }
 
 /* https://stackoverflow.com/a/19692380 */
@@ -911,7 +1060,7 @@ int Q_vscprintf( const char *format, va_list pArgs ) {
 	return retVal;
 }
 
-void Com_sprintf( char *dest, int size, char *fmt, ... ) {
+void Com_sprintf( char *dest, int size, const char *fmt, ... ) {
 	va_list argPtr;
 	va_start( argPtr, fmt );
 
@@ -946,7 +1095,7 @@ Searches the string for the given
 key and returns the associated value, or an empty string.
 ===============
 */
-char *Info_ValueForKey( char *s, char *key ) {
+const char *Info_ValueForKey( char *s, const char *key ) {
 	char	pkey[ 512 ];
 	static	char value[ 2 ][ 512 ];	// use two buffers so compares
 								// work without stomping on each other
@@ -984,7 +1133,7 @@ char *Info_ValueForKey( char *s, char *key ) {
 	}
 }
 
-void Info_RemoveKey( char *s, char *key ) {
+void Info_RemoveKey( char *s, const char *key ) {
 	char *start;
 	char	pkey[ 512 ];
 	char	value[ 512 ];
@@ -1044,10 +1193,10 @@ qboolean Info_Validate( char *s ) {
 	return true;
 }
 
-void Info_SetValueForKey( char *s, char *key, char *value ) {
+void Info_SetValueForKey( char *s, const char *key, const char *value ) {
 	char	newi[ MAX_INFO_STRING ], *v;
 	int		c;
-	int		maxsize = MAX_INFO_STRING;
+	unsigned int		maxsize = MAX_INFO_STRING;
 
 	if( strstr( key, "\\" ) || strstr( value, "\\" ) ) {
 		Com_Printf( "Can't use keys or values with a \\\n" );
