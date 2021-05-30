@@ -19,41 +19,28 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 */
 // models.c -- model loading and caching
 
+#include "qcommon/qcommon.h"
 #include "gl_local.h"
-
-model_t *loadmodel;
-int modfilelen;
-
-void Mod_LoadSpriteModel( model_t *mod, void *buffer );
-void Mod_LoadBrushModel( model_t *mod, void *buffer );
-void Mod_LoadAliasModel( model_t *mod, void *buffer );
-model_t *Mod_LoadModel( model_t *mod, qboolean crash );
 
 byte mod_novis[ MAX_MAP_LEAFS / 8 ];
 
-#define MAX_MOD_KNOWN 512
-model_t mod_known[ MAX_MOD_KNOWN ];
-int mod_numknown;
+static std::vector< hosae::Model > cachedModels;
 
 // the inline * models from the current map are kept seperate
-model_t mod_inline[ MAX_MOD_KNOWN ];
+//hosae::Model mod_inline[ MAX_MOD_KNOWN ];
 
-int registration_sequence;
+//int registration_sequence;
 
-/*
-===============
-Mod_PointInLeaf
-===============
-*/
-mleaf_t *Mod_PointInLeaf( vec3_t p, model_t *model ) {
+mleaf_t *hosae::BSPModel::PointInLeaf( const vec3_t p )
+{
 	mnode_t *node;
 	float d;
 	cplane_t *plane;
 
-	if( !model || !model->nodes )
+	if( nodes == nullptr )
 		VID_Error( ERR_DROP, "Mod_PointInLeaf: bad model" );
 
-	node = model->nodes;
+	node = nodes;
 	while( 1 ) {
 		if( node->contents != -1 ) return (mleaf_t *)node;
 		plane = node->plane;
@@ -64,21 +51,17 @@ mleaf_t *Mod_PointInLeaf( vec3_t p, model_t *model ) {
 			node = node->children[ 1 ];
 	}
 
-	return NULL;  // never reached
+	return nullptr;  // never reached
 }
 
-/*
-===================
-Mod_DecompressVis
-===================
-*/
-byte *Mod_DecompressVis( byte *in, model_t *model ) {
+byte *hosae::BSPModel::DecompressVis( byte *in )
+{
 	static byte decompressed[ MAX_MAP_LEAFS / 8 ];
 	int c;
 	byte *out;
 	int row;
 
-	row = ( model->vis->numclusters + 7 ) >> 3;
+	row = ( vis->numclusters + 7 ) >> 3;
 	out = decompressed;
 
 	if( !in ) {  // no vis info, so make all visible
@@ -106,44 +89,29 @@ byte *Mod_DecompressVis( byte *in, model_t *model ) {
 	return decompressed;
 }
 
-/*
-==============
-Mod_ClusterPVS
-==============
-*/
-byte *Mod_ClusterPVS( int cluster, model_t *model ) {
-	if( cluster == -1 || !model->vis ) return mod_novis;
-	return Mod_DecompressVis(
-		(byte *)model->vis + model->vis->bitofs[ cluster ][ DVIS_PVS ], model );
+byte *hosae::BSPModel::ClusterPVS( int cluster )
+{
+	if( cluster == -1 || vis == nullptr ) return mod_novis;
+	return DecompressVis( (byte *)vis + vis->bitofs[ cluster ][ DVIS_PVS ] );
 }
 
 //===============================================================================
 
-/*
-================
-Mod_Modellist_f
-================
-*/
 void Mod_Modellist_f( void ) {
 	int i;
-	model_t *mod;
+	hosae::Model *mod;
 	int total;
 
 	total = 0;
 	VID_Printf( PRINT_ALL, "Loaded models:\n" );
-	for( i = 0, mod = mod_known; i < mod_numknown; i++, mod++ ) {
-		if( !mod->name[ 0 ] ) continue;
-		VID_Printf( PRINT_ALL, "%8i : %s\n", mod->extradatasize, mod->name );
-		total += mod->extradatasize;
+	for ( const auto &mod : cachedModels )
+	{
+		VID_Printf( PRINT_ALL, "%8i : %s\n", mod.GetName() );
 	}
-	VID_Printf( PRINT_ALL, "Total resident: %i\n", total );
+
+	VID_Printf( PRINT_ALL, "Total resident: %i\n", cachedModels.size() );
 }
 
-/*
-===============
-Mod_Init
-===============
-*/
 void Mod_Init( void ) { memset( mod_novis, 0xff, sizeof( mod_novis ) ); }
 
 /*
@@ -153,8 +121,8 @@ Mod_ForName
 Loads in a model for the given name
 ==================
 */
-model_t *Mod_ForName( const char *name, qboolean crash ) {
-	model_t *mod;
+hosae::Model *Mod_ForName( const char *name, qboolean crash ) {
+	hosae::Model *mod;
 	unsigned *buf;
 	int i;
 
@@ -173,22 +141,28 @@ model_t *Mod_ForName( const char *name, qboolean crash ) {
 	//
 	// search the currently loaded models
 	//
-	for( i = 0, mod = mod_known; i < mod_numknown; i++, mod++ ) {
-		if( !mod->name[ 0 ] ) continue;
-		if( !strcmp( mod->name, name ) ) return mod;
+	for ( auto &i : cachedModels )
+	{
+		if ( strcmp( i.GetName(), name ) != 0 )
+			continue;
+
+		return &i;
 	}
 
 	//
 	// find a free model slot spot
 	//
+
 	for( i = 0, mod = mod_known; i < mod_numknown; i++, mod++ ) {
 		if( !mod->name[ 0 ] ) break;  // free spot
 	}
+
 	if( i == mod_numknown ) {
 		if( mod_numknown == MAX_MOD_KNOWN )
 			VID_Error( ERR_DROP, "mod_numknown == MAX_MOD_KNOWN" );
 		mod_numknown++;
 	}
+
 	strcpy( mod->name, name );
 
 	//
@@ -209,6 +183,10 @@ model_t *Mod_ForName( const char *name, qboolean crash ) {
 	//
 
 	// call the apropriate loader
+
+	void Mod_LoadAliasModel( hosae::Model *mod, void *buf );
+	void Mod_LoadSpriteModel( hosae::Model * mod, void *buf );
+	void Mod_LoadBrushModel( hosae::Model * mod, void *buf );
 
 	switch( LittleLong( *(unsigned *)buf ) ) {
 	case IDALIASHEADER:
@@ -252,61 +230,47 @@ model_t *Mod_ForName( const char *name, qboolean crash ) {
 
 byte *mod_base;
 
-/*
-=================
-Mod_LoadLighting
-=================
-*/
-void Mod_LoadLighting( lump_t *l ) {
+void hosae::BSPModel::LoadLighting( const lump_t *l ) {
 	if( !l->filelen ) {
-		loadmodel->lightdata = NULL;
+		lightdata = NULL;
 		return;
 	}
-	loadmodel->lightdata = static_cast<byte *>( Hunk_Alloc( l->filelen ) );
-	memcpy( loadmodel->lightdata, mod_base + l->fileofs, l->filelen );
+	lightdata = static_cast<byte *>( Hunk_Alloc( l->filelen ) );
+	memcpy( lightdata, mod_base + l->fileofs, l->filelen );
 }
 
-/*
-=================
-Mod_LoadVisibility
-=================
-*/
-void Mod_LoadVisibility( lump_t *l ) {
+void hosae::BSPModel::LoadVisibility( const lump_t *l ) {
 	int i;
 
 	if( !l->filelen ) {
-		loadmodel->vis = NULL;
+		vis = NULL;
 		return;
 	}
-	loadmodel->vis = static_cast<dvis_t *>( Hunk_Alloc( l->filelen ) );
-	memcpy( loadmodel->vis, mod_base + l->fileofs, l->filelen );
+	vis = static_cast<dvis_t *>( Hunk_Alloc( l->filelen ) );
+	memcpy( vis, mod_base + l->fileofs, l->filelen );
 
-	loadmodel->vis->numclusters = LittleLong( loadmodel->vis->numclusters );
-	for( i = 0; i < loadmodel->vis->numclusters; i++ ) {
-		loadmodel->vis->bitofs[ i ][ 0 ] = LittleLong( loadmodel->vis->bitofs[ i ][ 0 ] );
-		loadmodel->vis->bitofs[ i ][ 1 ] = LittleLong( loadmodel->vis->bitofs[ i ][ 1 ] );
+	vis->numclusters = LittleLong( vis->numclusters );
+	for( i = 0; i < vis->numclusters; i++ ) {
+		vis->bitofs[ i ][ 0 ] = LittleLong( vis->bitofs[ i ][ 0 ] );
+		vis->bitofs[ i ][ 1 ] = LittleLong( vis->bitofs[ i ][ 1 ] );
 	}
 }
 
-/*
-=================
-Mod_LoadVertexes
-=================
-*/
-void Mod_LoadVertexes( lump_t *l ) {
+void hosae::BSPModel::LoadVertices( const lump_t *l )
+{
 	dvertex_t *in;
 	mvertex_t *out;
 	int i, count;
 
 	in = (dvertex_t *)( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
-		VID_Error( ERR_DROP, "MOD_LoadBmodel: funny lump size in %s",
-			loadmodel->name );
+		VID_Error( ERR_DROP, "MOD_LoadBmodel: funny lump size in %s", GetName() );
+
 	count = l->filelen / sizeof( *in );
 	out = static_cast<mvertex_t *>( Hunk_Alloc( count * sizeof( *out ) ) );
 
-	loadmodel->vertexes = out;
-	loadmodel->numvertexes = count;
+	vertexes = out;
+	numvertexes = count;
 
 	for( i = 0; i < count; i++, in++, out++ ) {
 		out->position[ 0 ] = LittleFloat( in->point[ 0 ] );
@@ -315,11 +279,6 @@ void Mod_LoadVertexes( lump_t *l ) {
 	}
 }
 
-/*
-=================
-RadiusFromBounds
-=================
-*/
 float RadiusFromBounds( vec3_t mins, vec3_t maxs ) {
 	int i;
 	vec3_t corner;
@@ -331,25 +290,19 @@ float RadiusFromBounds( vec3_t mins, vec3_t maxs ) {
 	return VectorLength( corner );
 }
 
-/*
-=================
-Mod_LoadSubmodels
-=================
-*/
-void Mod_LoadSubmodels( lump_t *l ) {
+void hosae::BSPModel::LoadSubModels( const lump_t *l ) {
 	dmodel_t *in;
 	mmodel_t *out;
 	int i, j, count;
 
 	in = (dmodel_t *)( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
-		VID_Error( ERR_DROP, "MOD_LoadBmodel: funny lump size in %s",
-			loadmodel->name );
+		VID_Error( ERR_DROP, "MOD_LoadBmodel: funny lump size in %s", GetName() );
 	count = l->filelen / sizeof( *in );
 	out = static_cast<mmodel_t *>( Hunk_Alloc( count * sizeof( *out ) ) );
 
-	loadmodel->submodels = out;
-	loadmodel->numsubmodels = count;
+	submodels = out;
+	numsubmodels = count;
 
 	for( i = 0; i < count; i++, in++, out++ ) {
 		for( j = 0; j < 3; j++ ) {  // spread the mins / maxs by a pixel
@@ -369,20 +322,19 @@ void Mod_LoadSubmodels( lump_t *l ) {
 Mod_LoadEdges
 =================
 */
-void Mod_LoadEdges( lump_t *l ) {
+void hosae::BSPModel::LoadEdges( const lump_t *l ) {
 	dedge_t *in;
 	medge_t *out;
 	int i, count;
 
 	in = (dedge_t *)( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
-		VID_Error( ERR_DROP, "MOD_LoadBmodel: funny lump size in %s",
-			loadmodel->name );
+		VID_Error( ERR_DROP, "MOD_LoadBmodel: funny lump size in %s", GetName() );
 	count = l->filelen / sizeof( *in );
 	out = static_cast<medge_t *>( Hunk_Alloc( ( count + 1 ) * sizeof( *out ) ) );
 
-	loadmodel->edges = out;
-	loadmodel->numedges = count;
+	edges = out;
+	numedges = count;
 
 	for( i = 0; i < count; i++, in++, out++ ) {
 		out->v[ 0 ] = (unsigned short)LittleShort( in->v[ 0 ] );
@@ -395,7 +347,8 @@ void Mod_LoadEdges( lump_t *l ) {
 Mod_LoadTexinfo
 =================
 */
-void Mod_LoadTexinfo( lump_t *l ) {
+void hosae::BSPModel::LoadTextureInfo( const lump_t *l )
+{
 	texinfo_t *in;
 	mtexinfo_t *out, *step;
 	int i, j, count;
@@ -403,14 +356,13 @@ void Mod_LoadTexinfo( lump_t *l ) {
 	int next;
 
 	in = (texinfo_t *)( mod_base + l->fileofs );
-	if( l->filelen % sizeof( *in ) )
-		VID_Error( ERR_DROP, "MOD_LoadBmodel: funny lump size in %s",
-			loadmodel->name );
+	if ( l->filelen % sizeof( *in ) )
+		VID_Error( ERR_DROP, "MOD_LoadBmodel: funny lump size in %s", GetName() );
 	count = l->filelen / sizeof( *in );
 	out = static_cast<mtexinfo_t *>( Hunk_Alloc( count * sizeof( *out ) ) );
 
-	loadmodel->texinfo = out;
-	loadmodel->numtexinfo = count;
+	texinfo = out;
+	numtexinfo = count;
 
 	for( i = 0; i < count; i++, in++, out++ ) {
 		for( j = 0; j < 8; j++ ) out->vecs[ 0 ][ j ] = LittleFloat( in->vecs[ 0 ][ j ] );
@@ -418,7 +370,7 @@ void Mod_LoadTexinfo( lump_t *l ) {
 		out->flags = LittleLong( in->flags );
 		next = LittleLong( in->nexttexinfo );
 		if( next > 0 )
-			out->next = loadmodel->texinfo + next;
+			out->next = texinfo + next;
 		else
 			out->next = NULL;
 
@@ -432,7 +384,7 @@ void Mod_LoadTexinfo( lump_t *l ) {
 
 	// count animation frames
 	for( i = 0; i < count; i++ ) {
-		out = &loadmodel->texinfo[ i ];
+		out = &texinfo[ i ];
 		out->numframes = 1;
 		for( step = out->next; step && step != out; step = step->next )
 			out->numframes++;
@@ -440,13 +392,9 @@ void Mod_LoadTexinfo( lump_t *l ) {
 }
 
 /*
-================
-CalcSurfaceExtents
-
 Fills in s->texturemins[] and s->extents[]
-================
 */
-void CalcSurfaceExtents( msurface_t *s ) {
+void hosae::BSPModel::CalculateSurfaceExtents( msurface_t *s ) {
 	float mins[ 2 ], maxs[ 2 ], val;
 	int i, j, e;
 	mvertex_t *v;
@@ -459,11 +407,11 @@ void CalcSurfaceExtents( msurface_t *s ) {
 	tex = s->texinfo;
 
 	for( i = 0; i < s->numedges; i++ ) {
-		e = loadmodel->surfedges[ s->firstedge + i ];
+		e = surfedges[ s->firstedge + i ];
 		if( e >= 0 )
-			v = &loadmodel->vertexes[ loadmodel->edges[ e ].v[ 0 ] ];
+			v = &vertexes[ edges[ e ].v[ 0 ] ];
 		else
-			v = &loadmodel->vertexes[ loadmodel->edges[ -e ].v[ 1 ] ];
+			v = &vertexes[ edges[ -e ].v[ 1 ] ];
 
 		for( j = 0; j < 2; j++ ) {
 			val = v->position[ 0 ] * tex->vecs[ j ][ 0 ] +
@@ -489,14 +437,9 @@ void CalcSurfaceExtents( msurface_t *s ) {
 void GL_BuildPolygonFromSurface( msurface_t *fa );
 void GL_CreateSurfaceLightmap( msurface_t *surf );
 void GL_EndBuildingLightmaps( void );
-void GL_BeginBuildingLightmaps( model_t *m );
+void GL_BeginBuildingLightmaps( hosae::BSPModel *m );
 
-/*
-=================
-Mod_LoadFaces
-=================
-*/
-void Mod_LoadFaces( lump_t *l ) {
+void hosae::BSPModel::LoadFaces( const lump_t *l ) {
 	dface_t *in;
 	msurface_t *out;
 	int i, count, surfnum;
@@ -506,16 +449,14 @@ void Mod_LoadFaces( lump_t *l ) {
 	in = (dface_t *)( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
 		VID_Error( ERR_DROP, "MOD_LoadBmodel: funny lump size in %s",
-			loadmodel->name );
+			GetName() );
 	count = l->filelen / sizeof( *in );
 	out = static_cast<msurface_t *>( Hunk_Alloc( count * sizeof( *out ) ) );
 
-	loadmodel->surfaces = out;
-	loadmodel->numsurfaces = count;
+	surfaces = out;
+	numsurfaces = count;
 
-	currentmodel = loadmodel;
-
-	GL_BeginBuildingLightmaps( loadmodel );
+	GL_BeginBuildingLightmaps( this );
 
 	for( surfnum = 0; surfnum < count; surfnum++, in++, out++ ) {
 		out->firstedge = LittleLong( in->firstedge );
@@ -527,14 +468,14 @@ void Mod_LoadFaces( lump_t *l ) {
 		side = LittleShort( in->side );
 		if( side ) out->flags |= SURF_PLANEBACK;
 
-		out->plane = loadmodel->planes + planenum;
+		out->plane = planes + planenum;
 
 		ti = LittleShort( in->texinfo );
-		if( ti < 0 || ti >= loadmodel->numtexinfo )
+		if( ti < 0 || ti >= numtexinfo )
 			VID_Error( ERR_DROP, "MOD_LoadBmodel: bad texinfo number" );
-		out->texinfo = loadmodel->texinfo + ti;
+		out->texinfo = texinfo + ti;
 
-		CalcSurfaceExtents( out );
+		CalculateSurfaceExtents( out );
 
 		// lighting info
 
@@ -543,7 +484,7 @@ void Mod_LoadFaces( lump_t *l ) {
 		if( i == -1 )
 			out->samples = NULL;
 		else
-			out->samples = loadmodel->lightdata + i;
+			out->samples = lightdata + i;
 
 		// set the drawing flags
 
@@ -567,11 +508,6 @@ void Mod_LoadFaces( lump_t *l ) {
 	GL_EndBuildingLightmaps();
 }
 
-/*
-=================
-Mod_SetParent
-=================
-*/
 void Mod_SetParent( mnode_t *node, mnode_t *parent ) {
 	node->parent = parent;
 	if( node->contents != -1 ) return;
@@ -584,20 +520,19 @@ void Mod_SetParent( mnode_t *node, mnode_t *parent ) {
 Mod_LoadNodes
 =================
 */
-void Mod_LoadNodes( lump_t *l ) {
+void hosae::BSPModel::LoadNodes( const lump_t *l ) {
 	int i, j, count, p;
 	dnode_t *in;
 	mnode_t *out;
 
 	in = (dnode_t *)( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
-		VID_Error( ERR_DROP, "MOD_LoadBmodel: funny lump size in %s",
-			loadmodel->name );
+		VID_Error( ERR_DROP, "MOD_LoadBmodel: funny lump size in %s", GetName() );
 	count = l->filelen / sizeof( *in );
 	out = static_cast<mnode_t *>( Hunk_Alloc( count * sizeof( *out ) ) );
 
-	loadmodel->nodes = out;
-	loadmodel->numnodes = count;
+	nodes = out;
+	numnodes = count;
 
 	for( i = 0; i < count; i++, in++, out++ ) {
 		for( j = 0; j < 3; j++ ) {
@@ -606,7 +541,7 @@ void Mod_LoadNodes( lump_t *l ) {
 		}
 
 		p = LittleLong( in->planenum );
-		out->plane = loadmodel->planes + p;
+		out->plane = planes + p;
 
 		out->firstsurface = LittleShort( in->firstface );
 		out->numsurfaces = LittleShort( in->numfaces );
@@ -615,21 +550,16 @@ void Mod_LoadNodes( lump_t *l ) {
 		for( j = 0; j < 2; j++ ) {
 			p = LittleLong( in->children[ j ] );
 			if( p >= 0 )
-				out->children[ j ] = loadmodel->nodes + p;
+				out->children[ j ] = nodes + p;
 			else
-				out->children[ j ] = (mnode_t *)( loadmodel->leafs + ( -1 - p ) );
+				out->children[ j ] = (mnode_t *)( leafs + ( -1 - p ) );
 		}
 	}
 
-	Mod_SetParent( loadmodel->nodes, NULL );  // sets nodes and leafs
+	Mod_SetParent( nodes, NULL );  // sets nodes and leafs
 }
 
-/*
-=================
-Mod_LoadLeafs
-=================
-*/
-void Mod_LoadLeafs( lump_t *l ) {
+void hosae::BSPModel::LoadLeafs( const lump_t *l ) {
 	dleaf_t *in;
 	mleaf_t *out;
 	int i, j, count, p;
@@ -637,13 +567,12 @@ void Mod_LoadLeafs( lump_t *l ) {
 
 	in = (dleaf_t *)( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
-		VID_Error( ERR_DROP, "MOD_LoadBmodel: funny lump size in %s",
-			loadmodel->name );
+		VID_Error( ERR_DROP, "MOD_LoadBmodel: funny lump size in %s", GetName() );
 	count = l->filelen / sizeof( *in );
 	out = static_cast<mleaf_t *>( Hunk_Alloc( count * sizeof( *out ) ) );
 
-	loadmodel->leafs = out;
-	loadmodel->numleafs = count;
+	leafs = out;
+	numleafs = count;
 
 	for( i = 0; i < count; i++, in++, out++ ) {
 		for( j = 0; j < 3; j++ ) {
@@ -658,7 +587,7 @@ void Mod_LoadLeafs( lump_t *l ) {
 		out->area = LittleShort( in->area );
 
 		out->firstmarksurface =
-			loadmodel->marksurfaces + LittleShort( in->firstleafface );
+			marksurfaces + LittleShort( in->firstleafface );
 		out->nummarksurfaces = LittleShort( in->numleaffaces );
 
 		// gl underwater warp
@@ -679,26 +608,25 @@ void Mod_LoadLeafs( lump_t *l ) {
 Mod_LoadMarksurfaces
 =================
 */
-void Mod_LoadMarksurfaces( lump_t *l ) {
+void hosae::BSPModel::LoadMarkSurfaces( const lump_t *l ) {
 	int i, j, count;
 	short *in;
 	msurface_t **out;
 
 	in = (short *)( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
-		VID_Error( ERR_DROP, "MOD_LoadBmodel: funny lump size in %s",
-			loadmodel->name );
+		VID_Error( ERR_DROP, "MOD_LoadBmodel: funny lump size in %s", GetName() );
 	count = l->filelen / sizeof( *in );
 	out = static_cast<msurface_t **>( Hunk_Alloc( count * sizeof( *out ) ) );
 
-	loadmodel->marksurfaces = out;
-	loadmodel->nummarksurfaces = count;
+	marksurfaces = out;
+	nummarksurfaces = count;
 
 	for( i = 0; i < count; i++ ) {
 		j = LittleShort( in[ i ] );
-		if( j < 0 || j >= loadmodel->numsurfaces )
+		if( j < 0 || j >= numsurfaces )
 			VID_Error( ERR_DROP, "Mod_ParseMarksurfaces: bad surface number" );
-		out[ i ] = loadmodel->surfaces + j;
+		out[ i ] = surfaces + j;
 	}
 }
 
@@ -707,33 +635,26 @@ void Mod_LoadMarksurfaces( lump_t *l ) {
 Mod_LoadSurfedges
 =================
 */
-void Mod_LoadSurfedges( lump_t *l ) {
+void hosae::BSPModel::LoadSurfaceEdges( const lump_t *l ) {
 	int i, count;
 	int *in, *out;
 
 	in = (int *)( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
-		VID_Error( ERR_DROP, "MOD_LoadBmodel: funny lump size in %s",
-			loadmodel->name );
+		VID_Error( ERR_DROP, "MOD_LoadBmodel: funny lump size in %s", GetName() );
 	count = l->filelen / sizeof( *in );
 	if( count < 1 || count >= MAX_MAP_SURFEDGES )
-		VID_Error( ERR_DROP, "MOD_LoadBmodel: bad surfedges count in %s: %i",
-			loadmodel->name, count );
+		VID_Error( ERR_DROP, "MOD_LoadBmodel: bad surfedges count in %s: %i", GetName(), count );
 
 	out = static_cast<int *>( Hunk_Alloc( count * sizeof( *out ) ) );
 
-	loadmodel->surfedges = out;
-	loadmodel->numsurfedges = count;
+	surfedges = out;
+	numsurfedges = count;
 
 	for( i = 0; i < count; i++ ) out[ i ] = LittleLong( in[ i ] );
 }
 
-/*
-=================
-Mod_LoadPlanes
-=================
-*/
-void Mod_LoadPlanes( lump_t *l ) {
+void hosae::BSPModel::LoadPlanes( const lump_t *l ) {
 	int i, j;
 	cplane_t *out;
 	dplane_t *in;
@@ -742,13 +663,12 @@ void Mod_LoadPlanes( lump_t *l ) {
 
 	in = (dplane_t *)( mod_base + l->fileofs );
 	if( l->filelen % sizeof( *in ) )
-		VID_Error( ERR_DROP, "MOD_LoadBmodel: funny lump size in %s",
-			loadmodel->name );
+		VID_Error( ERR_DROP, "MOD_LoadBmodel: funny lump size in %s", GetName() );
 	count = l->filelen / sizeof( *in );
 	out = static_cast<cplane_t *>( Hunk_Alloc( count * 2 * sizeof( *out ) ) );
 
-	loadmodel->planes = out;
-	loadmodel->numplanes = count;
+	planes = out;
+	numplanes = count;
 
 	for( i = 0; i < count; i++, in++, out++ ) {
 		bits = 0;
@@ -768,7 +688,7 @@ void Mod_LoadPlanes( lump_t *l ) {
 Mod_LoadBrushModel
 =================
 */
-void Mod_LoadBrushModel( model_t *mod, void *buffer ) {
+void hosae::BSPModel::LoadBrushModels( model_t *mod, void *buffer ) {
 	dheader_t *header;
 	mmodel_t *bm;
 
@@ -1152,4 +1072,6 @@ void Mod_FreeAll( void ) {
 	for( i = 0; i < mod_numknown; i++ ) {
 		if( mod_known[ i ].extradatasize ) Mod_Free( &mod_known[ i ] );
 	}
+
+	
 }

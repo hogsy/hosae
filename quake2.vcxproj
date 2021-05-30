@@ -150,7 +150,7 @@
       <ObjectFileName>.\debug\</ObjectFileName>
       <ProgramDataBaseFileName>.\debug\</ProgramDataBaseFileName>
       <DisableSpecificWarnings>4996</DisableSpecificWarnings>
-      <AdditionalIncludeDirectories>3rdparty\;3rdparty\glew\include\</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;3rdparty\;3rdparty\glew\include\</AdditionalIncludeDirectories>
     </ClCompile>
     <Midl>
       <SuppressStartupBanner>true</SuppressStartupBanner>

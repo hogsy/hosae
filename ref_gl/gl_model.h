@@ -162,99 +162,109 @@ typedef struct mleaf_s
 	int          nummarksurfaces;
 } mleaf_t;
 
-
-//===================================================================
-
-//
-// Whole model
-//
-
-typedef enum
-{
-	mod_bad,
-	mod_brush,
-	mod_sprite,
-	mod_alias
-} modtype_t;
-
-typedef struct model_s
-{
-	char name[ MAX_QPATH ];
-
-	int registration_sequence;
-
-	modtype_t type;
-	int       numframes;
-
-	int flags;
-
-	//
-	// volume occupied by the model graphics
-	//
-	vec3_t mins, maxs;
-	float  radius;
-
-	//
-	// solid volume for clipping
-	//
-	qboolean clipbox;
-	vec3_t   clipmins, clipmaxs;
-
-	//
-	// brush model
-	//
-	int firstmodelsurface, nummodelsurfaces;
-	int lightmap;// only for submodels
-
-	int       numsubmodels;
-	mmodel_t *submodels;
-
-	int       numplanes;
-	cplane_t *planes;
-
-	int      numleafs;// number of visible leafs, not counting 0
-	mleaf_t *leafs;
-
-	int        numvertexes;
-	mvertex_t *vertexes;
-
-	int      numedges;
-	medge_t *edges;
-
-	int      numnodes;
-	int      firstnode;
-	mnode_t *nodes;
-
-	int         numtexinfo;
-	mtexinfo_t *texinfo;
-
-	int         numsurfaces;
-	msurface_t *surfaces;
-
-	int  numsurfedges;
-	int *surfedges;
-
-	int          nummarksurfaces;
-	msurface_t **marksurfaces;
-
-	dvis_t *vis;
-
-	byte *lightdata;
-
-	// for alias models and skins
-	image_t *skins[ MAX_MD2SKINS ];
-
-	int   extradatasize;
-	void *extradata;
-} model_t;
-
 //============================================================================
 
-void     Mod_Init( void );
-void     Mod_ClearAll( void );
-model_t *Mod_ForName( const char *name, qboolean crash );
-mleaf_t *Mod_PointInLeaf( float *p, model_t *model );
-byte *   Mod_ClusterPVS( int cluster, model_t *model );
+namespace hosae
+{
+	enum class ModelType
+	{
+		BAD,
+		BSP,
+		SPRITE,
+		MD2
+	};
+
+	class Model
+	{
+	public:
+		Model() {}
+		~Model() {}
+
+		const char *GetName() const { return name; }
+
+	protected:
+	private:
+		ModelType type{ ModelType::BAD };
+
+		char name[ MAX_QPATH ];
+	};
+
+	class MD2Model : public Model
+	{
+	public:
+	protected:
+	private:
+	};
+
+	class BSPModel : public Model
+	{
+	public:
+		mleaf_t *PointInLeaf( const vec3_t p );
+
+		byte *DecompressVis( byte *in );
+		byte *ClusterPVS( int cluser );
+
+		void LoadLighting( const lump_t *l );
+		void LoadVisibility( const lump_t *l );
+		void LoadVertices( const lump_t *l );
+		void LoadSubModels( const lump_t *l );
+		void LoadEdges( const lump_t *l );
+		void LoadTextureInfo( const lump_t *l );
+		void LoadFaces( const lump_t *l );
+		void LoadNodes( const lump_t *l );
+		void LoadLeafs( const lump_t *l );
+		void LoadMarkSurfaces( const lump_t *l );
+		void LoadSurfaceEdges( const lump_t *l );
+		void LoadPlanes( const lump_t *l );
+
+		void CalculateSurfaceExtents( msurface_t *s );
+
+	protected:
+	private:
+		int       numsubmodels;
+		mmodel_t *submodels;
+
+		int       numplanes;
+		cplane_t *planes;
+
+		int      numleafs;// number of visible leafs, not counting 0
+		mleaf_t *leafs;
+
+		int        numvertexes;
+		mvertex_t *vertexes;
+
+		int      numedges;
+		medge_t *edges;
+
+		int      numnodes;
+		int      firstnode;
+		mnode_t *nodes;
+
+		int         numtexinfo;
+		mtexinfo_t *texinfo;
+
+		int         numsurfaces;
+		msurface_t *surfaces;
+
+		int  numsurfedges;
+		int *surfedges;
+
+		int          nummarksurfaces;
+		msurface_t **marksurfaces;
+
+		dvis_t *vis;
+
+		byte *lightdata;
+
+		float radius{ 0.0f };
+	};
+}// namespace hosae
+
+void          Mod_Init( void );
+void          Mod_ClearAll( void );
+hosae::Model *Mod_ForName( const char *name, qboolean crash );
+mleaf_t *     Mod_PointInLeaf( float *p, hosae::Model *model );
+byte *        Mod_ClusterPVS( int cluster, hosae::Model *model );
 
 void Mod_Modellist_f( void );
 
@@ -264,7 +274,7 @@ int   Hunk_End( void );
 void  Hunk_Free( void *base );
 
 void Mod_FreeAll( void );
-void Mod_Free( model_t *mod );
+void Mod_Free( hosae::Model *mod );
 
 void Mod_BeginRegistration( const char *model );
 void Mod_EndRegistration( void );
