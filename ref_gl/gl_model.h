@@ -177,21 +177,49 @@ namespace hosae
 	class Model
 	{
 	public:
-		Model() {}
+		Model( const char *name ) {}
 		~Model() {}
 
+		ModelType   GetType() const { return type; }
 		const char *GetName() const { return name; }
 
+		//int   extradatasize;
+		//void *extradata;
+
+		// for alias models and skins
+		image_t *skins[ MAX_MD2SKINS ];
+
 	protected:
-	private:
 		ModelType type{ ModelType::BAD };
 
+		// volume occupied by the model graphics
+		vec3_t mins, maxs;
+		float  radius;
+
+		int numframes;
+
+	private:
 		char name[ MAX_QPATH ];
 	};
 
 	class MD2Model : public Model
 	{
 	public:
+		MD2Model( void *buffer );
+		~MD2Model();
+
+	protected:
+	private:
+	};
+
+	class SpriteModel : public Model
+	{
+	public:
+		SpriteModel( void *buffer );
+		~SpriteModel();
+
+		dsprite_t *spriteData;
+
 	protected:
 	private:
 	};
@@ -199,6 +227,9 @@ namespace hosae
 	class BSPModel : public Model
 	{
 	public:
+		BSPModel( void *buffer );
+		~BSPModel();
+
 		mleaf_t *PointInLeaf( const vec3_t p );
 
 		byte *DecompressVis( byte *in );
@@ -218,6 +249,8 @@ namespace hosae
 		void LoadPlanes( const lump_t *l );
 
 		void CalculateSurfaceExtents( msurface_t *s );
+
+		std::vector< BSPModel * > subModels;
 
 	protected:
 	private:
@@ -257,14 +290,16 @@ namespace hosae
 		byte *lightdata;
 
 		float radius{ 0.0f };
+
+		// brush model
+		int firstmodelsurface, nummodelsurfaces;
+		int lightmap;// only for submodels
 	};
 }// namespace hosae
 
 void          Mod_Init( void );
 void          Mod_ClearAll( void );
 hosae::Model *Mod_ForName( const char *name, qboolean crash );
-mleaf_t *     Mod_PointInLeaf( float *p, hosae::Model *model );
-byte *        Mod_ClusterPVS( int cluster, hosae::Model *model );
 
 void Mod_Modellist_f( void );
 
@@ -279,4 +314,4 @@ void Mod_Free( hosae::Model *mod );
 void Mod_BeginRegistration( const char *model );
 void Mod_EndRegistration( void );
 
-struct model_s *Mod_RegisterModel( const char *name );
+hosae::Model *Mod_RegisterModel( const char *name );

@@ -118,17 +118,17 @@ typedef struct
 
 //====================================================
 
-extern image_t gltextures[ MAX_GLTEXTURES ];
-extern int     numgltextures;
+extern image_t gltextures[ MAX_GLTEXTURES ];// todo: replace with vector
+extern int     numgltextures;               // todo: kill
 
-extern image_t * r_notexture;
-extern image_t * r_particletexture;
-extern entity_t *currententity;
-extern model_t * currentmodel;
-extern int       r_visframecount;
-extern int       r_framecount;
-extern cplane_t  frustum[ 4 ];
-extern int       c_brush_polys, c_alias_polys;
+extern image_t *     r_notexture;
+extern image_t *     r_particletexture;
+extern entity_t *    currententity;// todo: kill
+extern hosae::Model *currentmodel; // todo: kill
+extern int           r_visframecount;
+extern int           r_framecount;
+extern cplane_t      frustum[ 4 ];
+extern int           c_brush_polys, c_alias_polys;
 
 extern int gl_filter_min, gl_filter_max;
 
@@ -236,7 +236,7 @@ void R_PushDlights( void );
 
 //====================================================================
 
-extern model_t *r_worldmodel;
+extern hosae::BSPModel *r_worldmodel;
 
 extern unsigned d_8to24table[ 256 ];
 

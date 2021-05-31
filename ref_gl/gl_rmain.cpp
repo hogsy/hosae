@@ -26,7 +26,7 @@ void R_Clear( void );
 
 viddef_t vid;
 
-model_t *r_worldmodel;
+hosae::BSPModel *r_worldmodel;
 
 double gldepthmin, gldepthmax;
 
@@ -37,7 +37,7 @@ image_t *r_notexture;        // use for bad textures
 image_t *r_particletexture;  // little dot for particles
 
 entity_t *currententity;
-model_t *currentmodel;
+hosae::Model *currentmodel;
 
 cplane_t frustum[ 4 ];
 
@@ -181,7 +181,7 @@ void R_DrawSpriteModel( entity_t *e ) {
 
 	// don't even bother culling, because it's just a single
 	// polygon without a surface cache
-
+	
 	psprite = (dsprite_t *)currentmodel->extradata;
 
 #if 0
